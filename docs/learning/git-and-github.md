@@ -33,6 +33,11 @@ git push -u origin feat/samples-reception
 # open the PR on GitHub → CI runs → Squash and merge → delete the branch
 git switch main; git pull                 # bring the merged change home
 ```
+**Deleting the local branch after a squash merge:** `git branch -d <branch>` says "not fully merged". That's expected: squash made a *new* commit on `main`, so Git doesn't recognise your branch's commits there. Check nothing is lost, then force-delete:
+```powershell
+git diff main <branch>      # empty output = everything is on main
+git branch -D <branch>
+```
 Branch names: `feat/…`, `fix/…`, `docs/…`, `chore/…`, `ci/…`. Merge within a day (trunk-based).
 
 ## 4. Protecting `main`

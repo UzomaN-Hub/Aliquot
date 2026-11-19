@@ -1,0 +1,51 @@
+# Local development services for Aliquot (ARCHITECTURE.md → Environments).
+# The API and web run natively; only Postgres and Redis run in Docker.
+#
+# Start:  docker compose -f infra/docker-compose.yml up -d
+# Stop:   docker compose -f infra/docker-compose.yml down
+# Wipe:   docker compose -f infra/docker-compose.yml down -v   (deletes local data)
+#
+# Values come from infra/.env (copy infra/.env.example). The defaults below
+# are for local development only and never reach staging or production.
+
+name: aliquot
+
+services:
+  postgres:
+    # Major version pinned to match Supabase (Postgres 17).
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-aliquot}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-aliquot_dev}
+      POSTGRES_DB: ${POSTGRES_DB:-aliquot}
+      # Store and compare times in UTC (CLAUDE.md: times stored in UTC).
+      TZ: UTC
+      PGTZ: UTC
+    ports:
+      # 127.0.0.1 = reachable from this laptop only, not from the Wi-Fi network.
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7.4-alpine
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  postgres-data:
+  redis-data:
