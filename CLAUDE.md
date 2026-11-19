@@ -84,7 +84,8 @@ All decisions live in `docs/`. Read the ones relevant to the task before writing
 *(Fill in during the Setup stage; keep this list current.)*
 | Task | Command |
 | --- | --- |
-| Start database + Redis | `docker compose up -d` |
+| Start database + Redis | `docker compose -f infra/docker-compose.yml up -d` (from repo root; first time: copy `infra/.env.example` to `infra/.env`) |
+| Stop database + Redis | `docker compose -f infra/docker-compose.yml down` (add `-v` to wipe local data) |
 | Run API | `uv run fastapi dev` (from `apps/api`) |
 | Run worker | `uv run celery -A app.workers worker --pool=solo -l info` (Windows dev) |
 | Run web | `pnpm dev` (from `apps/web`) |
