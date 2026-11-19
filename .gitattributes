@@ -1,0 +1,19 @@
+# Line endings: store and check out every text file with LF (Linux style),
+# whatever the OS. Our code runs in Linux containers and on Linux CI runners.
+# This file overrides each developer's core.autocrlf setting.
+* text=auto eol=lf
+
+# cmd.exe scripts misbehave with LF, so these keep Windows (CRLF) endings.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binary files: never convert or diff as text.
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.webp  binary
+*.avif  binary
+*.ico   binary
+*.pdf   binary
+*.woff  binary
+*.woff2 binary
