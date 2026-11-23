@@ -1,0 +1,67 @@
+/*
+ * Design tokens (DESIGN.md). The ONLY place colour values live.
+ * Three colours: Bone, Haematoxylin, Eosin, plus tints (mixes) of them.
+ * Contrast-safe adjustments: decision 008.
+ *
+ * Tailwind utilities use semantic names (bg-surface, text-ink, text-eosin-text…),
+ * so components never need `dark:` variants: the variables flip instead.
+ */
+
+/* ── Light (default) ─────────────────────────────────────────── */
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+  --surface: #f6f3ec; /* Bone: all backgrounds */
+  --ink: #221d45; /* Haematoxylin: text, nav (14.3:1 on Bone) */
+  --ink-secondary: #4a4470; /* 8.1:1 */
+  --ink-muted: #5e5880; /* 6.0:1: smallest allowed text colour */
+  --ink-faint: #8a85a3; /* 3.2:1: NON-TEXT only (placeholders' icons, dividers that must be seen) */
+  --selected: #e9e5f2; /* selected row, warning background */
+  --hover: #efecf5; /* row hover */
+  --hairline: #e4dfd3; /* dividers, field borders (warm, from Bone) */
+  --primary: #221d45; /* filled primary button */
+  --on-primary: #f6f3ec;
+  --eosin: #e0566f; /* fills, borders, critical marks (non-text) */
+  --eosin-text: #b23b56; /* Eosin text: 5.2:1 on Bone, 4.6:1 on selected */
+  --overlay-shadow: rgb(34 29 69 / 0.18); /* Haematoxylin at 18% */
+  --scrim: rgb(34 29 69 / 0.4); /* behind modals */
+}
+
+/* ── Dark: Haematoxylin background, Bone text, Eosin kept ───── */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --surface: #221d45;
+    --ink: #f6f3ec; /* 14.3:1 */
+    --ink-secondary: #c1bdc2; /* Bone 75% · 8.5:1 */
+    --ink-muted: #a5a2ad; /* Bone 62% · 6.3:1 */
+    --ink-faint: #8c8899; /* Bone 50% · 4.6:1 */
+    --selected: #332e52; /* Bone 8% */
+    --hover: #2b2649; /* Bone 4% */
+    --hairline: #484463; /* Bone 18% */
+    --primary: #f6f3ec;
+    --on-primary: #221d45;
+    --eosin: #e0566f;
+    --eosin-text: #e67d8e; /* Eosin 75% + Bone · 5.8:1 on bg, 4.7:1 on selected */
+    --overlay-shadow: rgb(0 0 0 / 0.35);
+    --scrim: rgb(14 11 33 / 0.6);
+  }
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --surface: #221d45;
+  --ink: #f6f3ec;
+  --ink-secondary: #c1bdc2;
+  --ink-muted: #a5a2ad;
+  --ink-faint: #8c8899;
+  --selected: #332e52;
+  --hover: #2b2649;
+  --hairline: #484463;
+  --primary: #f6f3ec;
+  --on-primary: #221d45;
+  --eosin: #e0566f;
+  --eosin-text: #e67d8e;
+  --overlay-shadow: rgb(0 0 0 / 0.35);
+  --scrim: rgb(14 11 33 / 0.6);
+}

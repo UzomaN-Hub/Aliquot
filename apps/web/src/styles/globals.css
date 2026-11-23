@@ -1,0 +1,112 @@
+@import "tailwindcss";
+@import "./tokens.css";
+
+/*
+ * Tailwind theme, locked to DESIGN.md. Every default scale we don't use is
+ * removed (`initial`), so e.g. `bg-red-500`, `rounded-lg`, `shadow-md` or a
+ * fourth font simply don't exist. Guardrails: DESIGN.md "Implementation".
+ */
+@theme inline {
+  /* Colours: only the three + tints, by role. */
+  --color-*: initial;
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-ink-secondary: var(--ink-secondary);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-faint: var(--ink-faint);
+  --color-selected: var(--selected);
+  --color-hover: var(--hover);
+  --color-hairline: var(--hairline);
+  --color-primary: var(--primary);
+  --color-on-primary: var(--on-primary);
+  --color-eosin: var(--eosin);
+  --color-eosin-text: var(--eosin-text);
+  --color-scrim: var(--scrim);
+
+  /* Fonts: exactly three (loaded with next/font in app/layout.tsx). */
+  --font-*: initial;
+  --font-serif: var(--font-instrument-serif), Georgia, serif;
+  --font-sans: var(--font-atkinson-next), system-ui, sans-serif;
+  --font-mono: var(--font-atkinson-mono), ui-monospace, monospace;
+
+  /* Type scale: app body 14px, public 16px, landing 44–56px. */
+  --text-*: initial;
+  --text-caption: 12px;
+  --text-caption--line-height: 16px;
+  --text-body: 14px;
+  --text-body--line-height: 20px;
+  --text-body-lg: 16px;
+  --text-body-lg--line-height: 24px;
+  --text-title: 20px;
+  --text-title--line-height: 28px;
+  --text-figure: 28px;
+  --text-figure--line-height: 32px;
+  --text-display: 36px;
+  --text-display--line-height: 40px;
+  --text-hero-sm: 44px;
+  --text-hero-sm--line-height: 44px;
+  --text-hero: 56px;
+  --text-hero--line-height: 56px;
+
+  /* Weights 400–600 only. */
+  --font-weight-*: initial;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+
+  /* Headline setting (landing + lab wordmark only). */
+  --tracking-*: initial;
+  --tracking-headline: -0.03em;
+
+  /* Shape follows importance. `rounded-full` (marketing pill) is built in. */
+  --radius-*: initial;
+  --radius-nav: 8px;
+  --radius-control: 10px;
+  --radius-panel: 16px;
+  --radius-hero: 28px;
+
+  /* Shadows only on menus and dialogs. */
+  --shadow-*: initial;
+  --shadow-overlay: 0 8px 24px var(--overlay-shadow);
+  --inset-shadow-*: initial;
+  --drop-shadow-*: initial;
+  --text-shadow-*: initial;
+
+  /* No animation outside the landing hero (it brings its own). */
+  --animate-*: initial;
+
+  /* Motion for state changes: 150–200 ms ease-out. */
+  --default-transition-duration: 150ms;
+  --default-transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
+}
+
+@layer base {
+  html {
+    background-color: var(--color-surface);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: var(--text-body);
+    line-height: var(--text-body--line-height);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Result values, lab numbers, units, timers line up in columns. */
+  .font-mono {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Visible focus: 2px Haematoxylin ring, 2px offset (flips in dark mode). */
+  :focus-visible {
+    outline: 2px solid var(--color-ink);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
