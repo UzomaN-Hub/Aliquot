@@ -108,7 +108,7 @@ Every query used by a screen is checked with `EXPLAIN ANALYZE` against the 1M-ro
 | `<lab>.<domain>` | That lab's app and public result pages |
 | `api.<domain>` | API, reached directly only for webhooks (WhatsApp, Termii) and live updates (SSE). The browser reaches every other endpoint through the web's same-origin proxy: `/api/v1/…` on the web's own address is rewritten to the API's `/v1/…` (FRONTEND.md §5, decision 003) |
 
-**Until the domain is bought:** labs resolve by path on the free Vercel address (`aliquot.vercel.app/l/<lab>`). Tenant resolution sits behind one setting (`TENANT_MODE=path|subdomain`), so switching to subdomains later needs no code changes. The proxy works the same there: `aliquot.vercel.app/api/v1/…` → the Render API's `/v1/…`.
+**Until the domain is bought:** labs resolve by path on the free Vercel address (`aliquot-labs.vercel.app/l/<lab>`). Tenant resolution sits behind one setting (`TENANT_MODE=path|subdomain`), so switching to subdomains later needs no code changes. The proxy works the same there: `aliquot-labs.vercel.app/api/v1/…` → the Render API's `/v1/…`.
 
 1. Next.js `proxy.ts` (Next 16's name for middleware) reads the subdomain (or path) and loads the lab's public branding (cached).
 2. The API takes `lab_id` only from the signed token, never from the URL or body.
@@ -184,6 +184,8 @@ Every query used by a screen is checked with `EXPLAIN ANALYZE` against the 1M-ro
 | Production | The live system real labs use | See STACK.md |
 
 Staging is created when we first deploy, not before.
+
+**Live now (staging, Stage 1):** web `https://aliquot-labs.vercel.app` (Vercel Hobby, `fra1`) · API `https://aliquot-api.onrender.com` (Render free, Frankfurt, Docker, auto-deploy after CI passes, health check `/health`). Database, Redis and worker are added in later stages. How it deploys: decision 007.
 
 ---
 
