@@ -43,13 +43,19 @@
 - Then the same checks as on the laptop: `ruff check` (`--output-format=github` puts errors as comments on the PR's lines), `ruff format --check`, `mypy`, `pytest`.
 - `timeout-minutes` — a stuck job is killed instead of burning minutes for 6 hours.
 
+**Job `web`** — same shape as `api`, for `apps/web/**`.
+- `pnpm/action-setup` installs the pnpm version named in `apps/web/package.json` (`packageManager`), so CI and laptop match.
+- `actions/setup-node` installs Node 22 and caches pnpm's downloads, keyed on `apps/web/pnpm-lock.yaml`.
+- `pnpm install --frozen-lockfile` — fails if `package.json` and the lock file disagree (like `uv sync --locked`).
+- Then `lint`, `format:check`, `typecheck`, `test`, `build`. The build needs the four config variables (dummy values in `env:`); `NEXT_TELEMETRY_DISABLED` stops Next.js sending usage stats from CI.
+
 **Job `ci-ok` ("CI passed")** — the only check the ruleset requires.
 - `if: always()` runs it even when others fail or are skipped.
 - It fails if any job in `needs:` failed or was cancelled; "skipped" counts as fine.
 - Adding a job later = add it to `needs:`; the ruleset never changes.
 
 ## Coming next in this file
-Postgres + Redis **service containers** (when the first migration lands), the web job (`apps/web/**`), E2E, security scans. Then `deploy-staging.yml` and `release.yml` (CONVENTIONS.md §4).
+Postgres + Redis **service containers** (when the first migration lands), the 150 KB bundle budget, E2E, security scans. Then `deploy-staging.yml` and `release.yml` (CONVENTIONS.md §4).
 
 ## Where it's used in Aliquot
 - `.github/workflows/ci.yml`

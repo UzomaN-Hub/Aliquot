@@ -110,7 +110,7 @@ Every query used by a screen is checked with `EXPLAIN ANALYZE` against the 1M-ro
 
 **Until the domain is bought:** labs resolve by path on the free Vercel address (`aliquot.vercel.app/l/<lab>`). Tenant resolution sits behind one setting (`TENANT_MODE=path|subdomain`), so switching to subdomains later needs no code changes. The proxy works the same there: `aliquot.vercel.app/api/v1/…` → the Render API's `/v1/…`.
 
-1. Next.js middleware reads the subdomain (or path) and loads the lab's public branding (cached).
+1. Next.js `proxy.ts` (Next 16's name for middleware) reads the subdomain (or path) and loads the lab's public branding (cached).
 2. The API takes `lab_id` only from the signed token, never from the URL or body.
 3. A token for lab A on lab B's subdomain is rejected.
 4. Each request runs in a transaction with `SET LOCAL app.current_lab_id`; RLS filters every query.
