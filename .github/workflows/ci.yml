@@ -1,0 +1,59 @@
+# CI: runs on every pull request to main, and again after each merge to main.
+# Explained line by line in docs/learning/ci-cd.md.
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch: # "Run workflow" button on GitHub: runs every job
+
+# Least privilege: jobs can read the code and nothing else.
+permissions:
+  contents: read
+
+# A new push to the same PR cancels the older, now-pointless run.
+# Runs on main are never cancelled, so every merge gets checked.
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  # Decides which parts of the repo changed, so later jobs can skip.
+  # Filtering at job level (not with `on: paths:`) means a skipped job still
+  # reports a result, and the required "CI passed" check never hangs.
+  changes:
+    name: Detect changes
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      api: ${{ steps.filter.outputs.api }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0 # full history, so we can diff against the base commit
+          persist-credentials: false
+
+      - name: List changed folders
+        id: filter
+        env:
+          EVENT: ${{ github.event_name }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PUSH_BEFORE: ${{ github.event.before }}
+        run: |
+          if [ "$EVENT" = "workflow_dispatch" ]; then
+            echo "api=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [ "$EVENT" = "pull_request" ]; then BASE="$PR_BASE"; else BASE="$PUSH_BEFORE"; fi
+          CHANGED="$(git diff --name-only "$BASE" "$GITHUB_SHA")"
+          echo "Changed files:"; echo "$CHANGED"
+
+          # Backend jobs run when the API or this workflow changes.
+          if echo "$CHANGED" | grep -qE '^(apps/api/|\.github/workflows/ci\.yml$)'; then
+            echo "api=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "api=false" >> "$GITHUB_OUTPUT"
+          fi
