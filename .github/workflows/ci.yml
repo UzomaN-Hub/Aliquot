@@ -102,3 +102,18 @@ jobs:
 
       - name: Tests (pytest)
         run: uv run pytest
+
+  # The one check the main-branch ruleset requires. Passes when every job
+  # passed or was skipped (nothing relevant changed); fails otherwise.
+  # New jobs only need adding to `needs:` here, never to the ruleset.
+  ci-ok:
+    name: CI passed
+    if: always()
+    needs: [changes, api]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Fail if any job failed or was cancelled
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: exit 1
+      - run: echo "All jobs passed or were skipped."
