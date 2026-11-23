@@ -57,3 +57,48 @@ jobs:
           else
             echo "api=false" >> "$GITHUB_OUTPUT"
           fi
+
+  # Backend: lint, format, types, tests. Same commands as on the laptop.
+  api:
+    name: API · lint, types, tests
+    needs: changes
+    if: needs.changes.outputs.api == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: apps/api
+    env:
+      # The app refuses to start without these (app/core/config.py).
+      # Dummy values: tests never reach a real service.
+      ENVIRONMENT: test
+      PLATFORM_NAME: Aliquot
+      PLATFORM_DOMAIN: localhost
+      TENANT_MODE: path
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install uv (with download cache)
+        uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
+        with:
+          version: "0.13.9"
+          enable-cache: true
+          cache-dependency-glob: apps/api/uv.lock
+          cache-python: true
+
+      - name: Install Python 3.13 and dependencies from uv.lock
+        run: uv sync --locked
+
+      - name: Lint (Ruff)
+        run: uv run ruff check . --output-format=github
+
+      - name: Format check (Ruff)
+        run: uv run ruff format --check .
+
+      - name: Type check (mypy strict)
+        run: uv run mypy .
+
+      - name: Tests (pytest)
+        run: uv run pytest
