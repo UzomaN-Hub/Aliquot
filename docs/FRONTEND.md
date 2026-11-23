@@ -43,15 +43,16 @@ apps/web/src/
     clinical/                    flag preview (mirrors the server rule, tested against it)
   stores/                        Zustand stores (UI-only)
   styles/                        tokens.css, globals.css
-  middleware.ts                  tenant resolution, auth gate, CSP nonce, security headers
+  proxy.ts                       tenant resolution, auth gate, CSP nonce, security headers
+                                 (Next.js 16's name for "middleware"; not the same-origin API proxy, which is a rewrite in next.config.ts)
 packages/api-types/              types generated from FastAPI's OpenAPI
 ```
 **Rule:** `app/` holds routing only. Logic lives in `features/` and `lib/`. A feature may import from `components/` and `lib/`, never from another feature's internals.
 
 ## 3. Routing and tenancy
-- **One internal tree per lab:** `/l/[lab]/…`. In `TENANT_MODE=path`, that's the real URL (`aliquot.vercel.app/l/demo/worklist`). In `subdomain` mode, middleware rewrites `demo.<domain>/worklist` to the same tree, so pages never change when we switch modes.
+- **One internal tree per lab:** `/l/[lab]/…`. In `TENANT_MODE=path`, that's the real URL (`aliquot.vercel.app/l/demo/worklist`). In `subdomain` mode, `proxy.ts` rewrites `demo.<domain>/worklist` to the same tree, so pages never change when we switch modes.
 - **Route groups** split areas with different layouts and rules without changing URLs: `(auth)` bare branded pages, `(app)` signed-in shell with role-based navigation.
-- **Middleware, in order:** resolve lab → unknown or suspended lab shows a branded "Unavailable" page → protect `(app)` and `console` routes (no session cookie → sign-in) → set CSP nonce and security headers.
+- **`proxy.ts`, in order:** resolve lab → unknown or suspended lab shows a branded "Unavailable" page → protect `(app)` and `console` routes (no session cookie → sign-in) → set CSP nonce and security headers.
 - **Navigation is role-based** (ROLES.md): the nav lists only what the role uses; a route the role can't use returns 403 from the API and shows the "no access" state, even if typed directly.
 
 ## 4. Rendering per area
@@ -157,7 +158,7 @@ packages/api-types/              types generated from FastAPI's OpenAPI
 - Sentry with PII scrubbing; no patient values or names in breadcrumbs.
 
 ## 13. Security (frontend side)
-- CSP with per-request nonces (set in middleware); no inline scripts without a nonce.
+- CSP with per-request nonces (set in `proxy.ts`); no inline scripts without a nonce.
 - No `dangerouslySetInnerHTML` except the few controlled places in /styleguide; all text rendered escaped.
 - Tokens never in storage; access token in memory only.
 - Clinical responses `Cache-Control: no-store`; public result pages `noindex, nofollow` and `Referrer-Policy: no-referrer` so the token never leaks via referrers.

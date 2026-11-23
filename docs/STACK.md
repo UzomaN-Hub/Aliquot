@@ -30,7 +30,7 @@
 
 | Tool | Role |
 | --- | --- |
-| Next.js (App Router) + TypeScript | App framework; middleware resolves tenant from subdomain/domain |
+| Next.js 16 (App Router) + TypeScript | App framework; `proxy.ts` (formerly middleware) resolves tenant from subdomain/domain |
 | Tailwind CSS + shadcn/ui | Styling and components; lab name, logo and signatories; fixed Aliquot palette |
 | TanStack Query | Server state: fetching, caching, refetching worklists |
 | Zustand | Client state: UI state, scanner session, filters |

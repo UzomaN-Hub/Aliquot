@@ -90,12 +90,14 @@ All decisions live in `docs/`. Read the ones relevant to the task before writing
 | API first time | `uv sync`, then copy `.env.example` to `.env` (from `apps/api`) |
 | Run API | `uv run fastapi dev` (from `apps/api`) → http://localhost:8000/health |
 | Run worker | `uv run celery -A app.workers worker --pool=solo -l info` (Windows dev) |
-| Run web | `pnpm dev` (from `apps/web`) |
+| Web first time | `pnpm install`, then copy `.env.example` to `.env.local` (from `apps/web`) |
+| Run web | `pnpm dev` (from `apps/web`) → http://localhost:3000, `/api/v1/*` proxied to the API |
 | Migrate | `uv run alembic upgrade head` |
 | Backend tests | `uv run pytest` |
 | Frontend tests | `pnpm test` |
 | End-to-end | `pnpm e2e` |
-| Lint + types | `uv run ruff check .; uv run ruff format --check .; uv run mypy .` · `pnpm lint; pnpm typecheck` (PowerShell 5.1 has no `&&`) |
+| Lint + types | `uv run ruff check .; uv run ruff format --check .; uv run mypy .` · `pnpm lint; pnpm format:check; pnpm typecheck` (PowerShell 5.1 has no `&&`) |
+| Format | `uv run ruff format .` · `pnpm format` |
 
 ## 7. Definition of done
 - [ ] Matches FLOWS.md and ROLES.md
