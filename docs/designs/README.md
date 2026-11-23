@@ -20,7 +20,7 @@ Only screens in this folder are approved. Build from these, styled by ../DESIGN.
 - Mono font only for lab numbers and Received/Due times. Everything else Atkinson Hyperlegible Next.
 - No top bar, no avatar icon. Header starts 48px from the top of the main area.
 - No "CHEMICAL PATHOLOGY" label under the lab name.
-- Column headers exactly: Lab no., Patient, Tests, Received, Due (sentence case, 12px, #8A85A3) on every state.
+- Column headers exactly: Lab no., Patient, Tests, Received, Due (sentence case, 12px, muted `#5E5880`; the PNGs' faint `#8A85A3` fails contrast, decision 008) on every state.
 - Tests truncate to one line; rows exactly 40px.
 - Show all rows (no "Showing 10 of 18", no "View archive log").
 - No-results state keeps the real count ("18 waiting"); no footer; normal hairline search border.

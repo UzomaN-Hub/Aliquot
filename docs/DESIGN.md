@@ -10,10 +10,12 @@ Haematoxylin & Eosin (H&E), the classic pathology stain. Calm and editorial: the
 | --- | --- | --- |
 | Bone | `#F6F3EC` | All backgrounds |
 | Haematoxylin | `#221D45` | Text, primary buttons, navigation |
-| Eosin | `#E0566F` (text-safe `#C23E58`) | Attention only: critical results, STAT, one accent per page. Under 5% of any screen |
+| Eosin | `#E0566F` (text-safe `#B23B56`) | Attention only: critical results, STAT, one accent per page. Under 5% of any screen |
 
 Tints of Haematoxylin (not new colours): secondary text `#4A4470`, muted `#5E5880`, faint `#8A85A3`, selected `#E9E5F2`, row hover `#EFECF5`, hairline `#E4DFD3` (warm, from Bone).
-Dark mode: Haematoxylin-based deep background, Bone text, Eosin unchanged. No pure black.
+Dark mode: Haematoxylin `#221D45` background, Bone text, Bone tints for secondary/muted text, Eosin fills unchanged, Eosin text `#E67D8E` (Eosin lightened with Bone). No pure black.
+
+**Contrast (decision 008):** all text meets WCAG AA 4.5:1 on its background, including selected and hover rows. The smallest/lightest text colour is **muted** `#5E5880`. **Faint `#8A85A3` (3.2:1) is never used for text**, only for non-text marks. Plain Eosin `#E0566F` (3.3:1) is for fills, borders, large headline marks and critical-value outlines; Eosin *text* uses the text-safe value. Exact values for both modes live in `apps/web/src/styles/tokens.css`.
 
 ## Typography
 | Font | Use |
