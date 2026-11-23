@@ -29,6 +29,7 @@ jobs:
     timeout-minutes: 5
     outputs:
       api: ${{ steps.filter.outputs.api }}
+      web: ${{ steps.filter.outputs.web }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -44,6 +45,7 @@ jobs:
         run: |
           if [ "$EVENT" = "workflow_dispatch" ]; then
             echo "api=true" >> "$GITHUB_OUTPUT"
+            echo "web=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
@@ -51,12 +53,17 @@ jobs:
           CHANGED="$(git diff --name-only "$BASE" "$GITHUB_SHA")"
           echo "Changed files:"; echo "$CHANGED"
 
-          # Backend jobs run when the API or this workflow changes.
-          if echo "$CHANGED" | grep -qE '^(apps/api/|\.github/workflows/ci\.yml$)'; then
-            echo "api=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "api=false" >> "$GITHUB_OUTPUT"
-          fi
+          # area=true when any changed file matches the pattern.
+          # Editing this workflow runs every job, so CI changes test themselves.
+          check() {
+            if echo "$CHANGED" | grep -qE "^($2|\.github/workflows/ci\.yml$)"; then
+              echo "$1=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "$1=false" >> "$GITHUB_OUTPUT"
+            fi
+          }
+          check api 'apps/api/'
+          check web 'apps/web/'
 
   # Backend: lint, format, types, tests. Same commands as on the laptop.
   api:
@@ -103,13 +110,65 @@ jobs:
       - name: Tests (pytest)
         run: uv run pytest
 
+  # Frontend: lint, format, types, unit tests, production build.
+  web:
+    name: Web · lint, types, tests, build
+    needs: changes
+    if: needs.changes.outputs.web == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: apps/web
+    env:
+      # Required by src/lib/config.ts at build time. Dummy values.
+      PLATFORM_NAME: Aliquot
+      PLATFORM_DOMAIN: localhost
+      TENANT_MODE: path
+      API_URL: http://127.0.0.1:8000
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install pnpm (version from package.json "packageManager")
+        uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+        with:
+          package_json_file: apps/web/package.json
+
+      - name: Install Node 22 (with pnpm download cache)
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22"
+          cache: pnpm
+          cache-dependency-path: apps/web/pnpm-lock.yaml
+
+      - name: Install dependencies from pnpm-lock.yaml
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint (ESLint)
+        run: pnpm lint
+
+      - name: Format check (Prettier)
+        run: pnpm format:check
+
+      - name: Type check (tsc)
+        run: pnpm typecheck
+
+      - name: Unit tests (Vitest)
+        run: pnpm test
+
+      - name: Production build
+        run: pnpm build
+
   # The one check the main-branch ruleset requires. Passes when every job
   # passed or was skipped (nothing relevant changed); fails otherwise.
   # New jobs only need adding to `needs:` here, never to the ruleset.
   ci-ok:
     name: CI passed
     if: always()
-    needs: [changes, api]
+    needs: [changes, api, web]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
