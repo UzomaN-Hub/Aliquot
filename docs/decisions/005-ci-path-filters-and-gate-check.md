@@ -15,7 +15,7 @@ GitHub's built-in filter (`on: pull_request: paths:`) skips the **whole workflow
 
 ## Alternatives considered
 - **`on: paths:` per workflow:** simplest YAML, but breaks required checks as above.
-- **`dorny/paths-filter` action:** popular and tidy, but one more third-party dependency with write-free but code-reading access; our need is a ten-line `git diff`.
+- **`dorny/paths-filter` action:** popular and tidy, but one more third-party dependency running inside our CI with access to our code; our need is a ten-line `git diff`.
 - **Require each job as its own check:** every new job means editing the ruleset, and skipped jobs need special handling.
 
 ## Consequences
