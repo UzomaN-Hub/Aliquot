@@ -1,0 +1,55 @@
+[project]
+name = "aliquot-api"
+version = "0.1.0"
+description = "Aliquot API: FastAPI modular monolith"
+requires-python = ">=3.13,<3.14"
+dependencies = [
+    "fastapi[standard-no-fastapi-cloud-cli]>=0.165.0",
+    "pydantic-settings>=2.16.3",
+]
+
+# ── FastAPI CLI: `uv run fastapi dev` finds the app here ─────
+[tool.fastapi]
+entrypoint = "app.main:app"
+
+# ── Ruff: lint + format ──────────────────────────────────────
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+select = [
+  "E", "W",  # pycodestyle
+  "F",       # pyflakes: unused imports, undefined names
+  "I",       # import sorting
+  "B",       # bugbear: likely bugs
+  "UP",      # pyupgrade: modern Python syntax
+  "S",       # bandit: security
+  "BLE",     # no blind `except Exception`
+  "E722",    # no bare `except`
+  "SIM",     # simplifications
+  "RUF",     # ruff-specific
+]
+
+[tool.ruff.lint.per-file-ignores]
+# assert is how pytest checks things
+"**/tests/**" = ["S101"]
+
+# ── mypy: strict type checking ───────────────────────────────
+[tool.mypy]
+python_version = "3.13"
+strict = true
+plugins = ["pydantic.mypy"]
+
+# ── pytest ───────────────────────────────────────────────────
+[tool.pytest.ini_options]
+testpaths = ["app"]
+addopts = "--import-mode=importlib -ra"
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+    "mypy>=2.4.1",
+    "pytest>=9.2.0",
+    "ruff>=0.17.5",
+]

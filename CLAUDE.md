@@ -86,14 +86,15 @@ All decisions live in `docs/`. Read the ones relevant to the task before writing
 | --- | --- |
 | Start database + Redis | `docker compose -f infra/docker-compose.yml up -d` (from repo root; first time: copy `infra/.env.example` to `infra/.env`) |
 | Stop database + Redis | `docker compose -f infra/docker-compose.yml down` (add `-v` to wipe local data) |
-| Run API | `uv run fastapi dev` (from `apps/api`) |
+| API first time | `uv sync`, then copy `.env.example` to `.env` (from `apps/api`) |
+| Run API | `uv run fastapi dev` (from `apps/api`) → http://localhost:8000/health |
 | Run worker | `uv run celery -A app.workers worker --pool=solo -l info` (Windows dev) |
 | Run web | `pnpm dev` (from `apps/web`) |
 | Migrate | `uv run alembic upgrade head` |
 | Backend tests | `uv run pytest` |
 | Frontend tests | `pnpm test` |
 | End-to-end | `pnpm e2e` |
-| Lint + types | `uv run ruff check . && uv run mypy .` · `pnpm lint && pnpm typecheck` |
+| Lint + types | `uv run ruff check .; uv run ruff format --check .; uv run mypy .` · `pnpm lint; pnpm typecheck` (PowerShell 5.1 has no `&&`) |
 
 ## 7. Definition of done
 - [ ] Matches FLOWS.md and ROLES.md
