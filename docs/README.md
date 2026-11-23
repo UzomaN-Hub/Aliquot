@@ -14,10 +14,11 @@ All planning agreed 1–18 Nov 2026. These files are the single source of truth 
 | 6 | ANIMATION.md | Landing hero "The stain" |
 | 7 | STACK.md | Tools and services |
 | 8 | ARCHITECTURE.md | Modular monolith, speed (DSA), security, live updates, environments |
-| 9 | SCHEMA.md | Tables, indexes, relationships |
-| 10 | CONVENTIONS.md | Learning mode, Git, CI/CD, code style, testing, definition of done |
-| 11 | TESTING.md | Every test type, when it runs, pass criteria, release gate |
-| 12 | BUILD_PLAN.md | Build stages in order, each with its done-when gate |
+| 9 | FRONTEND.md | Web app structure, rendering, state, API client, performance |
+| 10 | SCHEMA.md | Tables, indexes, relationships |
+| 11 | CONVENTIONS.md | Learning mode, Git, CI/CD, code style, testing, definition of done |
+| 12 | TESTING.md | Every test type, when it runs, pass criteria, release gate |
+| 13 | BUILD_PLAN.md | Build stages in order, each with its done-when gate |
 
 ## Folders
 - `designs/` — approved reference screens (login, section worklist) with required fixes in `designs/README.md`.

@@ -12,6 +12,7 @@ All decisions live in `docs/`. Read the ones relevant to the task before writing
 | `docs/FLOWS.md` | Step-by-step behaviour of every flow |
 | `docs/PAGES.md` | The 38 pages and 6 templates |
 | `docs/DESIGN.md` | Colours, fonts, components, states, guardrails |
+| `docs/FRONTEND.md` | Web app structure, rendering, state, API client, performance, security |
 | `docs/ANIMATION.md` | Landing hero only |
 | `docs/STACK.md` | Tools and services (don't swap without asking) |
 | `docs/COSTS.md` | Monthly costs (local only; never put prices in public docs) |
@@ -57,9 +58,9 @@ All decisions live in `docs/`. Read the ones relevant to the task before writing
 - Before introducing a tool, library or pattern for the first time, explain in plain words: what it is, why we use it, what goes wrong without it. Keep it short.
 - Add a one-page note for each new concept in `docs/learning/<topic>.md`, pointing to where it's used in our code.
 - Record every decision with a trade-off in `docs/decisions/NNN-title.md` (context, decision, alternatives, consequences).
-- Uzoma writes some pieces himself in every stage (where the stage has them: at least one migration, one service, one test, one CI change). When it's his turn, guide and review; don't write it for him.
+- Claude writes all code, including tests, migrations, services and CI. Uzoma learns by reading the learning notes, decision records and code, and asks questions; keep those notes complete enough to study from.
 - Uzoma is new to uv. Show the uv command and its pip equivalent the first few times.
-- **CI/CD is built by hand, with Uzoma.** Write `.github/workflows/ci.yml`, `deploy-staging.yml` and `release.yml` step by step together (one job at a time, explaining every line: triggers, path filters, jobs, caching, services, secrets). Never paste a ready-made template wholesale. Path filters: backend jobs run only when `apps/api/**` changes, frontend jobs only when `apps/web/**` changes, E2E when either changes.
+- **CI/CD:** Claude writes `.github/workflows/ci.yml`, `deploy-staging.yml` and `release.yml`, adding one job per commit, and explains every line (triggers, path filters, jobs, caching, services, secrets) in `docs/learning/ci-cd.md`. Path filters: backend jobs run only when `apps/api/**` changes, frontend jobs only when `apps/web/**` changes, E2E when either changes.
 
 ## 4. How to work on a task
 1. Restate the task in one or two lines and name the docs it touches.

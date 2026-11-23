@@ -19,7 +19,7 @@
 
 **Region:** API, worker, Redis and database sit in the same Frankfurt region, the closest option to Nigeria among these providers. Database round trips stay around 1–2 ms instead of crossing an ocean on every query.
 
-The browser talks only to the API. Worker, Redis, database and n8n are never public.
+The browser talks to the web app, which proxies `/api/v1` to the API (FRONTEND.md §5); only live updates (SSE) go to the API directly. Worker, Redis, database and n8n are never public.
 
 ---
 
@@ -106,9 +106,9 @@ Every query used by a screen is checked with `EXPLAIN ANALYZE` against the 1M-ro
 | `<domain>` (e.g. aliquot.com) | Landing page |
 | `console.<domain>` | Super-admin console |
 | `<lab>.<domain>` | That lab's app and public result pages |
-| `api.<domain>` | API |
+| `api.<domain>` | API, reached directly only for webhooks (WhatsApp, Termii) and live updates (SSE). The browser reaches every other endpoint through the web's same-origin proxy: `/api/v1/…` on the web's own address is rewritten to the API's `/v1/…` (FRONTEND.md §5, decision 003) |
 
-**Until the domain is bought:** labs resolve by path on the free Vercel address (`aliquot.vercel.app/l/<lab>`). Tenant resolution sits behind one setting (`TENANT_MODE=path|subdomain`), so switching to subdomains later needs no code changes.
+**Until the domain is bought:** labs resolve by path on the free Vercel address (`aliquot.vercel.app/l/<lab>`). Tenant resolution sits behind one setting (`TENANT_MODE=path|subdomain`), so switching to subdomains later needs no code changes. The proxy works the same there: `aliquot.vercel.app/api/v1/…` → the Render API's `/v1/…`.
 
 1. Next.js middleware reads the subdomain (or path) and loads the lab's public branding (cached).
 2. The API takes `lab_id` only from the signed token, never from the URL or body.

@@ -9,7 +9,7 @@
 
 ## 2. Lab setup (Manager, first sign-in)
 1. Set password from invite.
-2. Branding check: logo, colours preview, result-slip signatories.
+2. Branding check: logo, name and result-slip signatories preview.
 3. Sections on: Chemical Pathology, Haematology, Microbiology (any combination).
 4. Test catalogue: starts from Aliquot's default catalogue; Manager edits prices, ranges, critical limits, turnaround times.
 5. Add staff: name, email, roles, sections → invite emails.

@@ -154,7 +154,7 @@ Three practising lab scientists each do: register a patient, receive a sample, e
 - On smoke failure: automatic rollback (CONVENTIONS.md §4).
 
 ## Tools summary
-pytest · Hypothesis · freezegun · httpx · Vitest · Playwright · axe-core · Schemathesis · k6 · Lighthouse CI · mutmut · CodeQL · Bandit · Semgrep · pip-audit · pnpm audit · gitleaks · OWASP ZAP · Burp Community · NVDA. All free.
+pytest · Hypothesis · freezegun · httpx · Vitest · Testing Library · MSW · Playwright · axe-core · Schemathesis · k6 · Lighthouse CI · @next/bundle-analyzer · mutmut · CodeQL · Bandit · Semgrep · pip-audit · pnpm audit · gitleaks · OWASP ZAP · Burp Community · NVDA. All free.
 
 ## Release gate
 v1 ships only when: all automated suites green · clinical safety tests 100% pass · performance budgets met and recorded · zero high/critical security findings · backup restore drill passed · usability check done.
