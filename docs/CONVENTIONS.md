@@ -5,7 +5,7 @@
 ## 1. Learning mode (this project is also a course)
 - Before introducing a new tool or pattern (Celery, RLS, SSE, outbox, CI job…), Claude Code explains it in plain words: what it is, why we use it, what would happen without it.
 - Each new concept gets a short note in `docs/learning/<topic>.md` (≤ 1 page, with the exact place it's used in our code).
-- Uzoma writes some pieces himself, chosen per stage (across the build: migrations, services, tests and CI changes; at least one of each type per stage where the stage has one), with Claude Code reviewing.
+- Claude Code writes all code, including tests, migrations, services and CI. Uzoma learns by reading the learning notes, decision records and code, and asks questions.
 - Every decision with a trade-off goes into `docs/decisions/NNN-title.md` (ADR: context, decision, alternatives, consequences). These are interview answers.
 
 ## 2. Repository layout
@@ -66,7 +66,7 @@ Workflow files: `.github/workflows/ci.yml` (pull requests), `deploy-staging.yml`
 **TypeScript / React**
 - Strict mode; no `any`; no default exports except Next.js pages/layouts.
 - Server Components by default; `"use client"` only where interaction needs it.
-- Server data through TanStack Query; local UI state in Zustand; no prop-drilling beyond two levels.
+- State homes per FRONTEND.md §6: server data in TanStack Query, shareable view state in the URL (nuqs), forms in React Hook Form, local UI in `useState`, cross-component UI in small Zustand stores. No prop-drilling beyond two levels.
 - Styling only through Tailwind tokens and `/styleguide` components; raw hex values fail lint.
 
 **Naming**
