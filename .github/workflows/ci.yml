@@ -110,6 +110,10 @@ jobs:
       - name: Tests (pytest)
         run: uv run pytest
 
+      # Render builds this same Dockerfile; catch a broken image before merge.
+      - name: Docker image builds
+        run: docker build --tag aliquot-api:ci .
+
   # Frontend: lint, format, types, unit tests, production build.
   web:
     name: Web · lint, types, tests, build

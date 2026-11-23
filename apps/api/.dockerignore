@@ -1,0 +1,11 @@
+# Keep the image small and free of secrets and local junk.
+.venv/
+.env
+.env.*
+**/__pycache__/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+**/tests/
+Dockerfile
+.dockerignore
