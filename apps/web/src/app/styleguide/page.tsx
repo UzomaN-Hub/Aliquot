@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { serverConfig } from "@/lib/config";
 
 import { ButtonSection, FieldSection } from "./_parts/components";
+import { BannerSection, FlagSection } from "./_parts/feedback";
 import { Foundations } from "./_parts/foundations";
 
 export const metadata: Metadata = {
@@ -17,6 +18,8 @@ const contents = [
   ["shape", "Shape"],
   ["button", "Button"],
   ["field", "Field"],
+  ["flag", "Flag"],
+  ["banner", "Banner"],
 ] as const;
 
 /**
@@ -54,6 +57,8 @@ export default function StyleguidePage() {
       <Foundations />
       <ButtonSection />
       <FieldSection />
+      <FlagSection />
+      <BannerSection />
     </main>
   );
 }
