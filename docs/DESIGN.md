@@ -104,7 +104,7 @@ Sentence case. Say what happened, then what to do. No "Oops", "successfully", "p
 ## Implementation guardrails (so code can't drift)
 - **Tokens only.** Tailwind config contains only Bone, Haematoxylin and its tints, and Eosin. Default Tailwind colours are removed, so no other colour can be used.
 - **Fonts locked.** `font-serif` = Instrument Serif, `font-sans` = Atkinson Hyperlegible Next, `font-mono` = Atkinson Hyperlegible Mono. No other font families.
-- **Components first.** Before any page: Button (marketing pill, app, text link), Field, Table, Banner, Toast, Modal, Skeleton, EmptyState, Flag. Pages compose these; no one-off styling in pages.
-- **/styleguide route** renders every component and state on one page. It's reviewed and approved before page work starts.
+- **Components first, just in time (decision 010).** Pages compose shared components (Button, Field, Table, Banner, Toast, Modal, Skeleton, EmptyState, Flag); no one-off styling in pages. Each component is built when the first page needs it.
+- **/styleguide route** renders every component and state on one page: a living catalogue and the visual-regression baseline, not an approval gate.
 - **Screenshot review.** Each finished page is screenshotted (Playwright) and checked against this file before it's marked done.
 - **Lint:** ESLint bans raw hex values and arbitrary Tailwind colour classes in app code.
