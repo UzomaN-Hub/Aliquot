@@ -8,7 +8,10 @@ export default defineConfig({
   },
   test: {
     include: ["src/**/*.test.{ts,tsx}"],
+    // Node by default (fast). Component tests opt into a browser-like DOM
+    // with `// @vitest-environment jsdom` on their first line.
     environment: "node",
+    setupFiles: ["./src/test/setup.ts"],
     // Modules that read config at import need these; dummy values only.
     env: {
       PLATFORM_NAME: "Test Platform",

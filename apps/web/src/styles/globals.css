@@ -58,12 +58,12 @@
   --tracking-*: initial;
   --tracking-headline: -0.03em;
 
-  /* Shape follows importance. `rounded-full` (marketing pill) is built in. */
+  /* Shape follows importance, near-square (decision 009).
+     `rounded-full` (marketing pill) is built in. */
   --radius-*: initial;
-  --radius-nav: 8px;
-  --radius-control: 10px;
-  --radius-panel: 16px;
-  --radius-hero: 28px;
+  --radius-control: 2px; /* buttons, fields, result cells */
+  --radius-panel: 4px; /* modals, menus, working panels */
+  --radius-hero: 28px; /* landing hero panels only */
 
   /* Shadows only on menus and dialogs. */
   --shadow-*: initial;

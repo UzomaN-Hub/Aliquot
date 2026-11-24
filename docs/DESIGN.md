@@ -31,10 +31,11 @@ Headline setting (landing and lab wordmark): large Instrument Serif with tight l
 ## Rules
 1. **One primary action per screen.** Only filled Haematoxylin button. Everything else is a text link or appears on demand (e.g. row actions on selection).
 2. **Two button styles:**
-   - Marketing: full pill, Haematoxylin fill, Bone text.
-   - In-app: 10px radius, Haematoxylin fill.
+   - Marketing: full pill, Haematoxylin fill, Bone text (landing only; revisited at the landing stage).
+   - In-app: 2px radius, Haematoxylin fill.
    - Secondary actions: underlined text link, never a second boxed button.
-3. **Shape follows importance:** hero panels 28px radius · working panels 16px · nav highlight 8px · table rows square with hairline dividers, never card-per-row.
+3. **Shape follows importance, near-square (decision 009):** controls (buttons, fields, result cells) 2px · modals, menus and working panels 4px · landing hero panels 28px (revisited at the landing stage) · table rows square with hairline dividers, never card-per-row. The selected nav item has no filled block: ink colour, semibold and a 2px Haematoxylin bar on its left edge.
+   - **Avoid the generic look.** For every component, name the usual AI/shadcn default (10px soft rectangles, lavender pill highlights, shimmer skeletons, spinner buttons) and don't use it.
 4. **No badges, pills or eyebrow tags as decoration.** Status (CH, CL, H, L, STAT) is shown as coloured text, not chips, unless a badge is functionally necessary.
 5. **Hierarchy through type, not boxes.** Small muted label above a large figure replaces cards and borders.
 6. **No gradients, shadows (except menus/dialogs), stock illustrations, emoji, or decorative icons.**
