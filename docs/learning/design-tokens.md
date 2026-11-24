@@ -31,7 +31,7 @@ Text must reach **4.5:1** against its background (WCAG AA); large text and non-t
 | Critical text / mark | `text-eosin-text` / `border-eosin` |
 | Result value, lab no. | `font-mono` (tabular figures) |
 | Sizes | `text-caption` 12 · `text-body` 14 · `text-body-lg` 16 · `text-title` 20 · `text-figure` 28 · `text-display` 36 · `text-hero-sm` 44 · `text-hero` 56 |
-| Shapes | `rounded-nav` 8 · `rounded-control` 10 · `rounded-panel` 16 · `rounded-hero` 28 · `rounded-full` pill |
+| Shapes (decision 009) | `rounded-control` 2 · `rounded-panel` 4 · `rounded-hero` 28 (landing) · `rounded-full` pill (marketing) |
 
 ## Where it's used in Aliquot
 - `apps/web/src/styles/tokens.css`, `apps/web/src/styles/globals.css`

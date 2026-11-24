@@ -92,6 +92,7 @@ All decisions live in `docs/`. Read the ones relevant to the task before writing
 | Run worker | `uv run celery -A app.workers worker --pool=solo -l info` (Windows dev) |
 | Web first time | `pnpm install`, then copy `.env.example` to `.env.local` (from `apps/web`) |
 | Run web | `pnpm dev` (from `apps/web`) → http://localhost:3000, `/api/v1/*` proxied to the API |
+| Styleguide | http://localhost:3000/styleguide while `pnpm dev` runs (deployed builds: only with `STYLEGUIDE_ENABLED=true`) |
 | Migrate | `uv run alembic upgrade head` |
 | Backend tests | `uv run pytest` |
 | Frontend tests | `pnpm test` |

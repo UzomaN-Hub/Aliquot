@@ -11,7 +11,20 @@ const valid = {
 
 describe("parseServerConfig", () => {
   it("accepts a complete environment and trims the API URL's trailing slash", () => {
-    expect(parseServerConfig(valid)).toEqual({ ...valid, API_URL: "http://localhost:8000" });
+    expect(parseServerConfig(valid)).toEqual({
+      ...valid,
+      API_URL: "http://localhost:8000",
+      STYLEGUIDE_ENABLED: false,
+    });
+  });
+
+  it("turns the styleguide on only for the exact string true", () => {
+    expect(parseServerConfig({ ...valid, STYLEGUIDE_ENABLED: "true" }).STYLEGUIDE_ENABLED).toBe(
+      true,
+    );
+    expect(() => parseServerConfig({ ...valid, STYLEGUIDE_ENABLED: "yes" })).toThrow(
+      "STYLEGUIDE_ENABLED",
+    );
   });
 
   it("names every missing variable", () => {
