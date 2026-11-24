@@ -49,9 +49,11 @@
 | --- | --- |
 | FastAPI (Python 3.13) | API · same version locally, in CI and in production (`python:3.13-slim` image) |
 | SQLAlchemy 2 (async) + Alembic | ORM and migrations |
+| psycopg 3 | Postgres driver, async for the API and sync for migrations and the worker (decision 011) |
+| PyJWT | Signs and checks access tokens (decision 013) |
 | Pydantic v2 | Request/response validation |
 | Custom JWT auth (access + refresh) + RBAC | Login, roles, tenant scoping |
-| Argon2 + SlowAPI | Password hashing, rate limiting |
+| Argon2 (argon2-cffi) + SlowAPI | Password hashing, rate limiting |
 | WeasyPrint | Branded PDF result slips |
 | python-barcode | Code 128 barcode labels |
 

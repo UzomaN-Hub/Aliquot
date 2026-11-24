@@ -7,7 +7,10 @@ is missing (CONVENTIONS.md §8). Never hard-code the platform name or domain.
 from functools import lru_cache
 from typing import Literal
 
+from pydantic import SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+_DRIVER = "postgresql+psycopg://"
 
 
 class Settings(BaseSettings):
@@ -17,6 +20,32 @@ class Settings(BaseSettings):
     platform_name: str
     platform_domain: str
     tenant_mode: Literal["path", "subdomain"]
+
+    # The running API connects as `aliquot_app`: a role that can never bypass
+    # row-level security (decision 012).
+    database_url: str
+    # The owner role. Used only by Alembic migrations and dev scripts, never by the API.
+    migration_database_url: str | None = None
+
+    # Signs access tokens. At least 32 random characters; different per environment.
+    jwt_secret: SecretStr
+    access_token_minutes: int = 15
+    refresh_token_days: int = 7
+    session_idle_hours: int = 8
+
+    @field_validator("database_url", "migration_database_url")
+    @classmethod
+    def _uses_psycopg(cls, value: str | None) -> str | None:
+        if value is not None and not value.startswith(_DRIVER):
+            raise ValueError(f"must start with {_DRIVER} (decision 011)")
+        return value
+
+    @field_validator("jwt_secret")
+    @classmethod
+    def _long_enough(cls, value: SecretStr) -> SecretStr:
+        if len(value.get_secret_value()) < 32:
+            raise ValueError("must be at least 32 characters")
+        return value
 
 
 @lru_cache

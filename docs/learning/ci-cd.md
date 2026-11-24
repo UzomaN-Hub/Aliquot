@@ -42,6 +42,9 @@
 - `uv sync --locked` — installs exactly `uv.lock`; **fails** if `pyproject.toml` and `uv.lock` disagree (you forgot to commit the lock).
 - Then the same checks as on the laptop: `ruff check` (`--output-format=github` puts errors as comments on the PR's lines), `ruff format --check`, `mypy`, `pytest`.
 - `timeout-minutes` — a stuck job is killed instead of burning minutes for 6 hours.
+- `services: postgres` — a **service container**: GitHub starts `postgres:17-alpine` next to the job, waits for its health check, and exposes it on `127.0.0.1:5432`. Tests run against real Postgres, so RLS, roles and migrations are proven, not mocked. It's thrown away after the job.
+- `env:` database lines — dummy credentials that only exist inside that throwaway container. `TEST_DB_ADMIN_URL` lets pytest create its own `aliquot_test` database.
+- "Migrations up, down, up" — applies every migration, rolls all of them back, applies again. Catches a broken `downgrade()` before it's needed in an emergency.
 
 **Job `web`** — same shape as `api`, for `apps/web/**`.
 - `pnpm/action-setup` installs the pnpm version named in `apps/web/package.json` (`packageManager`), so CI and laptop match.
@@ -55,7 +58,7 @@
 - Adding a job later = add it to `needs:`; the ruleset never changes.
 
 ## Coming next in this file
-Postgres + Redis **service containers** (when the first migration lands), the 150 KB bundle budget, E2E, security scans. Then `deploy-staging.yml` and `release.yml` (CONVENTIONS.md §4).
+Redis service container (with the worker), the 150 KB bundle budget, E2E, security scans. Then `deploy-staging.yml` (migrate staging, then deploy) and `release.yml` (CONVENTIONS.md §4).
 
 ## Where it's used in Aliquot
 - `.github/workflows/ci.yml`

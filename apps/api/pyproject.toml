@@ -4,8 +4,13 @@ version = "0.1.0"
 description = "Aliquot API: FastAPI modular monolith"
 requires-python = ">=3.13,<3.14"
 dependencies = [
+    "alembic>=1.20.1",
+    "argon2-cffi>=25.1.0",
     "fastapi[standard-no-fastapi-cloud-cli]>=0.165.0",
+    "psycopg[binary]>=3.3.9",
     "pydantic-settings>=2.16.3",
+    "pyjwt>=2.15.1",
+    "sqlalchemy[asyncio]>=2.1.9",
 ]
 
 # ── FastAPI CLI: `uv run fastapi dev` finds the app here ─────
@@ -32,8 +37,9 @@ select = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-# assert is how pytest checks things
-"**/tests/**" = ["S101"]
+# assert is how pytest checks things; tests use made-up passwords on purpose
+"**/tests/**" = ["S101", "S105", "S106"]
+"app/conftest.py" = ["S105", "S106"]
 
 # ── mypy: strict type checking ───────────────────────────────
 [tool.mypy]
@@ -48,7 +54,7 @@ addopts = "--import-mode=importlib -ra"
 
 [dependency-groups]
 dev = [
-    "httpx>=0.28.1",
+    "httpx2>=2.16.2",
     "mypy>=2.4.1",
     "pytest>=9.2.0",
     "ruff>=0.17.5",
