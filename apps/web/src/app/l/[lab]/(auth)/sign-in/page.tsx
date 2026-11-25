@@ -52,7 +52,7 @@ async function SignInScreen({ slug }: { slug: string }) {
       </header>
 
       <main className="flex flex-1 items-center justify-center px-4 py-12">
-        <div className="w-full max-w-[440px] rounded-panel border border-hairline bg-surface-raised px-7 py-12 sm:px-12 sm:py-14">
+        <div className="w-full max-w-[440px] rounded-panel border border-hairline bg-surface-raised px-7 py-12 shadow-overlay sm:px-12 sm:py-14">
           {lab.status === "active" ? (
             <>
               <h1 className="text-figure font-medium">

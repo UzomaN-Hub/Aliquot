@@ -41,7 +41,7 @@ Headline setting (landing and lab wordmark): large Instrument Serif with tight l
 5. **Hierarchy through type, not boxes.** Small muted label above a large figure replaces cards and borders.
 6. **No gradients, shadows (except menus/dialogs), stock illustrations, emoji, or decorative icons.**
 7. **Navigation is role-based, in a top bar, never a sidebar (decision 014).** The Prussian top bar holds the lab's name on the left, the 3–6 places this role uses most, and on the right the person's name with a menu (nine-dot button). The menu lists everything else they can do, the theme control and Sign out. Work is laid out across the page by importance, not stacked in a side column.
-7a. **Sign-in pages:** one generous form panel centred over a slowly drifting, heavily blurred blood film (drawn, not a photo), with a Bone or graphite veil for contrast. The lab's name stands large at the top left; the theme control is at the top right. Never a split screen or a card floating on a gradient.
+7a. **Sign-in pages:** one generous form panel centred over a slowly drifting, heavily blurred blood film (drawn, not a photo), with a Bone or graphite veil for contrast. The panel floats over the backdrop like a dialog, so it carries the overlay shadow. In dark mode the film is dimmed to a faint texture, so the panel is always the brightest thing on screen. The lab's name stands large at the top left; the theme control is at the top right. Never a split screen or a card floating on a gradient.
 8. **Tempo:** generous space on landing and public pages; efficient density on bench screens (36–40px rows).
 9. **Flags never rely on colour alone:** H, L, CH, CL always appear as text.
 10. **Grid:** 4px base. Vary container sizes deliberately by importance; never uniform blocks.
