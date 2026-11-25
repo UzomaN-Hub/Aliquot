@@ -2,7 +2,8 @@
 
 1. Applies every migration (as the owner role).
 2. Gives the app role the password in DATABASE_URL, so the API can log in.
-3. Seeds a fictional demo lab with three staff (idempotent: safe to run again).
+3. Seeds Tavnit Labs, our fictional working lab, with its staff
+   (idempotent: safe to run again).
 
 Refuses to run anywhere but ENVIRONMENT=local.
 """
@@ -15,12 +16,18 @@ from app.core.config import get_settings
 from app.core.ids import uuid7
 from app.core.security import hash_password
 
-DEMO_SLUG = "demo"
-DEMO_PASSWORD = "demo-password-2026"  # noqa: S105  # fictional local-only seed data
-DEMO_STAFF = (
-    ("Ada Nwosu", "manager@demo-lab.example", "manager", None),
-    ("Ngozi Bello", "chief@demo-lab.example", "chief_scientist", "chem_path"),
-    ("Chidi Okafor", "scientist@demo-lab.example", "lab_scientist", "chem_path"),
+# Fictional lab and people (CLAUDE.md §4). Emails use the reserved .example domain.
+LAB_NAME = "Tavnit Labs"
+LAB_SLUG = "tavnit"
+STAFF_PASSWORD = "tavnit-dev-2026"  # noqa: S105  # fictional, local-only seed data
+STAFF: tuple[tuple[str, str, str, tuple[str, ...]], ...] = (
+    ("Ifeoma Adeyemi", "ifeoma@tavnit-labs.example", "manager", ()),
+    ("Tunde Bakare", "tunde@tavnit-labs.example", "chief_scientist", ("chem_path",)),
+    ("Amina Yusuf", "amina@tavnit-labs.example", "chief_scientist", ("haematology",)),
+    ("Emeka Obi", "emeka@tavnit-labs.example", "chief_scientist", ("microbiology",)),
+    ("Chidinma Eze", "chidinma@tavnit-labs.example", "lab_scientist", ("chem_path",)),
+    ("Musa Ibrahim", "musa@tavnit-labs.example", "lab_scientist", ("haematology",)),
+    ("Blessing Okon", "blessing@tavnit-labs.example", "front_desk", ()),
 )
 
 
@@ -43,9 +50,10 @@ def set_app_role_password(connection: Connection, database_url: str) -> None:
     connection.execute(text(statement))
 
 
-def seed_demo_lab(connection: Connection) -> bool:
+def seed_working_lab(connection: Connection) -> bool:
+    """Create Tavnit Labs with all three sections and its staff. False if it exists."""
     exists = connection.execute(
-        text("SELECT 1 FROM labs WHERE slug = :slug"), {"slug": DEMO_SLUG}
+        text("SELECT 1 FROM labs WHERE slug = :slug"), {"slug": LAB_SLUG}
     ).first()
     if exists:
         return False
@@ -53,7 +61,7 @@ def seed_demo_lab(connection: Connection) -> bool:
     lab_id = uuid7()
     connection.execute(
         text("INSERT INTO labs (id, name, slug) VALUES (:id, :name, :slug)"),
-        {"id": lab_id, "name": "Demo Diagnostic Laboratory", "slug": DEMO_SLUG},
+        {"id": lab_id, "name": LAB_NAME, "slug": LAB_SLUG},
     )
     connection.execute(
         text(
@@ -62,8 +70,8 @@ def seed_demo_lab(connection: Connection) -> bool:
         ),
         {"lab_id": lab_id},
     )
-    password_hash = hash_password(DEMO_PASSWORD)
-    for full_name, email, role, section in DEMO_STAFF:
+    password_hash = hash_password(STAFF_PASSWORD)
+    for full_name, email, role, sections in STAFF:
         user_id = uuid7()
         connection.execute(
             text(
@@ -82,7 +90,7 @@ def seed_demo_lab(connection: Connection) -> bool:
             text("INSERT INTO user_roles (lab_id, user_id, role) VALUES (:lab, :user, :role)"),
             {"lab": lab_id, "user": user_id, "role": role},
         )
-        if section:
+        for section in sections:
             connection.execute(
                 text(
                     "INSERT INTO user_sections (lab_id, user_id, section) "
@@ -104,16 +112,17 @@ def main() -> None:
     engine = create_engine(settings.migration_database_url)
     with engine.begin() as connection:
         set_app_role_password(connection, settings.database_url)
-        created = seed_demo_lab(connection)
+        created = seed_working_lab(connection)
     engine.dispose()
 
     print("Database migrated; app role password set.")
     if created:
-        print(f"Demo lab created at /l/{DEMO_SLUG}. Staff (password: {DEMO_PASSWORD}):")
-        for full_name, email, role, _ in DEMO_STAFF:
-            print(f"  {email:<30} {full_name} ({role})")
+        print(f"{LAB_NAME} created at /l/{LAB_SLUG}. Staff (password: {STAFF_PASSWORD}):")
+        for full_name, email, role, sections in STAFF:
+            where = f", {', '.join(sections)}" if sections else ""
+            print(f"  {email:<32} {full_name} ({role}{where})")
     else:
-        print("Demo lab already exists.")
+        print(f"{LAB_NAME} already exists.")
 
 
 if __name__ == "__main__":
