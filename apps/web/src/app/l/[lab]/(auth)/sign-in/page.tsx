@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
+import { StainBackdrop } from "@/components/patterns/stain-backdrop";
 import { Skeleton, SkeletonGroup } from "@/components/ui/skeleton";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { SignInForm } from "@/features/auth/components/sign-in-form";
 import { serverConfig } from "@/lib/config";
 import { getLabBranding } from "@/lib/tenancy/branding";
@@ -18,19 +20,21 @@ export async function generateMetadata({
 }
 
 /**
- * Lab sign-in (PAGES.md 6). The lab's own name, set large like the title page of a
- * report; the form sits to its right on a hairline. Never a centred card.
- * The address is runtime data, so the screen streams in behind Suspense.
+ * Lab sign-in (PAGES.md 6, decision 014). The lab's name stands bold at the top
+ * left; one generous form panel sits in the centre over a slowly drifting, blurred
+ * blood film. The backdrop is static markup, so it paints before the lab's data
+ * arrives; the rest streams in behind Suspense.
  */
 export default function SignInPage({ params }: PageProps<"/l/[lab]/sign-in">) {
   return (
-    <main className="grid min-h-dvh lg:grid-cols-[minmax(0,1fr)_minmax(420px,38%)]">
+    <div className="relative isolate flex min-h-dvh flex-col">
+      <StainBackdrop />
       <Suspense fallback={<SignInSkeleton />}>
         {params.then(({ lab }) => (
           <SignInScreen slug={lab} />
         ))}
       </Suspense>
-    </main>
+    </div>
   );
 }
 
@@ -40,22 +44,32 @@ async function SignInScreen({ slug }: { slug: string }) {
 
   return (
     <>
-      <section className="flex items-end border-b border-hairline px-6 pt-16 pb-8 sm:px-10 lg:border-r lg:border-b-0 lg:p-14">
-        <h1 className="max-w-[14ch] font-serif text-display leading-none tracking-headline lg:text-hero">
+      <header className="flex items-start justify-between gap-6 px-6 pt-6 sm:px-10 sm:pt-8">
+        <p className="max-w-[18ch] font-serif text-figure leading-none tracking-headline sm:text-display">
           {lab.name}
-          <span className="sr-only">: staff sign-in</span>
-        </h1>
-      </section>
-      <section className="flex flex-col px-6 py-10 sm:px-10 lg:p-14">
-        <div className="my-auto w-full max-w-sm">
+        </p>
+        <ThemeToggle />
+      </header>
+
+      <main className="flex flex-1 items-center justify-center px-4 py-12">
+        <div className="w-full max-w-[440px] rounded-panel border border-hairline bg-surface-raised px-7 py-12 sm:px-12 sm:py-14">
           {lab.status === "active" ? (
-            <SignInForm lab={lab.slug} />
+            <>
+              <h1 className="text-figure font-medium">
+                Sign in<span className="sr-only"> to {lab.name}</span>
+              </h1>
+              <p className="mt-2 mb-9 text-body-lg text-ink-secondary">Use your work email.</p>
+              <SignInForm lab={lab.slug} />
+            </>
           ) : (
             <Unavailable name={lab.name} />
           )}
         </div>
-        <p className="mt-12 text-caption text-ink-muted">Powered by {serverConfig.PLATFORM_NAME}</p>
-      </section>
+      </main>
+
+      <footer className="px-6 pb-6 text-center text-caption text-ink-muted sm:px-10">
+        Powered by {serverConfig.PLATFORM_NAME}
+      </footer>
     </>
   );
 }
@@ -63,8 +77,8 @@ async function SignInScreen({ slug }: { slug: string }) {
 /** Suspended lab (FLOWS.md §1): staff can't sign in; data is kept. */
 function Unavailable({ name }: { name: string }) {
   return (
-    <div className="flex flex-col gap-2">
-      <p className="text-title">{name} is unavailable right now.</p>
+    <div className="flex flex-col gap-3">
+      <h1 className="text-title font-medium">{name} is unavailable right now.</h1>
       <p className="text-body-lg text-ink-secondary">
         Staff can&apos;t sign in at the moment. Your lab&apos;s records are safe. Contact your lab
         manager for help.
@@ -76,15 +90,17 @@ function Unavailable({ name }: { name: string }) {
 function SignInSkeleton() {
   return (
     <SkeletonGroup label="Loading sign-in">
-      <div className="grid min-h-dvh lg:grid-cols-[minmax(0,1fr)_minmax(420px,38%)]">
-        <div className="flex items-end border-b border-hairline px-6 pt-16 pb-8 sm:px-10 lg:border-r lg:border-b-0 lg:p-14">
-          <Skeleton className="h-10 w-64 lg:h-14 lg:w-96" />
+      <div className="flex min-h-dvh flex-col">
+        <div className="px-6 pt-6 sm:px-10 sm:pt-8">
+          <Skeleton className="h-8 w-56 sm:h-10 sm:w-72" />
         </div>
-        <div className="flex flex-col justify-center gap-6 px-6 py-10 sm:px-10 lg:p-14">
-          <Skeleton className="h-6 w-60" />
-          <Skeleton className="h-11 w-full max-w-sm" />
-          <Skeleton className="h-11 w-full max-w-sm" />
-          <Skeleton className="h-11 w-28" />
+        <div className="flex flex-1 items-center justify-center px-4 py-12">
+          <div className="flex w-full max-w-[440px] flex-col gap-6 rounded-panel border border-hairline bg-surface-raised px-7 py-12 sm:px-12 sm:py-14">
+            <Skeleton className="h-8 w-32" />
+            <Skeleton className="h-11 w-full" />
+            <Skeleton className="h-11 w-full" />
+            <Skeleton className="h-11 w-full" />
+          </div>
         </div>
       </div>
     </SkeletonGroup>

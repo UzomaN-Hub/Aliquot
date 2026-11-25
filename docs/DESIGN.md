@@ -5,17 +5,18 @@
 ## Concept
 Haematoxylin & Eosin (H&E), the classic pathology stain. Calm and editorial: the content carries the design, not decoration.
 
-## Colour (three only)
-| Name | Hex | Use |
-| --- | --- | --- |
-| Bone | `#F6F3EC` | All backgrounds |
-| Haematoxylin | `#221D45` | Text, primary buttons, navigation |
-| Eosin | `#E0566F` (text-safe `#B23B56`) | Attention only: critical results, STAT, one accent per page. Under 5% of any screen |
+## Colour (decision 014: three colours, muted, never glossy)
+| Mode | Background | Main colour (buttons, top bar, highlights) | Text | Attention |
+| --- | --- | --- | --- | --- |
+| **Light** | Bone `#F6F3EC` (off-white) | **Prussian blue** `#1B3A5C` (Perls' iron stain) | near-black `#1F1E1C` | Eosin |
+| **Dark** | **Graphite** `#1E1E1C` | Prussian softened `#A9BCD0` | off-white `#F2EFE8` | Eosin |
 
-Tints of Haematoxylin (not new colours): secondary text `#4A4470`, muted `#5E5880`, faint `#8A85A3`, selected `#E9E5F2`, row hover `#EFECF5`, hairline `#E4DFD3` (warm, from Bone).
-Dark mode: Haematoxylin `#221D45` background, Bone text, Bone tints for secondary/muted text, Eosin fills unchanged, Eosin text `#E67D8E` (Eosin lightened with Bone). No pure black.
+- **Eosin** `#E0566F` (text-safe `#B23B56` light, `#EB8A9A` dark): attention only. Critical results, STAT, one accent per page, under 5% of any screen.
+- **Tints, not new colours:** secondary and muted text are warm greys mixed from the text colour. The selected row is a Prussian tint (`#E3E8EE` / `#2C3138`). Hairlines are warm (`#E4DFD3` / `#3A3936`). Raised panels (sign-in form, menus) are `#FBF9F4` / `#262523`.
+- **The page background is always Bone or graphite.** The main colour only fills small elements (the top bar, buttons, selected states), never a whole page.
+- **Theme:** Auto (default) is dark from 19:00 and light from 08:00 by the device clock. **Light** and **Dark** override it and are remembered on the device. The control is on sign-in pages and in the app menu. The operating system's dark mode does not decide it.
 
-**Contrast (decision 008):** all text meets WCAG AA 4.5:1 on its background, including selected and hover rows. The smallest/lightest text colour is **muted** `#5E5880`. **Faint `#8A85A3` (3.2:1) is never used for text**, only for non-text marks. Plain Eosin `#E0566F` (3.3:1) is for fills, borders, large headline marks and critical-value outlines; Eosin *text* uses the text-safe value. Exact values for both modes live in `apps/web/src/styles/tokens.css`.
+**Contrast (decision 008, re-checked in 014):** all text meets WCAG AA 4.5:1 on its background, including selected and hover rows. The smallest text colour is **muted**. **Faint is never used for text**, only for field edges and underlines, where it meets the 3:1 rule for non-text marks. Plain Eosin is for fills and borders; Eosin *text* uses the text-safe value. Exact values live only in `apps/web/src/styles/tokens.css`.
 
 ## Typography
 | Font | Use |
@@ -29,17 +30,18 @@ Sizes: app body 14px, public pages 16px, landing headline 44–56px. Weights 400
 Headline setting (landing and lab wordmark): large Instrument Serif with tight letter-spacing (about -0.03em) and short line-height (about 1.0); body text keeps normal spacing. Landing headlines may end with a full stop in Eosin, Aliquot's signature mark. Used only on headlines, never in the app.
 
 ## Rules
-1. **One primary action per screen.** Only filled Haematoxylin button. Everything else is a text link or appears on demand (e.g. row actions on selection).
+1. **One primary action per screen.** Only filled main-colour (Prussian) button. Everything else is a text link or appears on demand (e.g. row actions on selection).
 2. **Two button styles:**
-   - Marketing: full pill, Haematoxylin fill, Bone text (landing only; revisited at the landing stage).
-   - In-app: 2px radius, Haematoxylin fill.
+   - Marketing: full pill, Prussian fill, Bone text (landing only; revisited at the landing stage).
+   - In-app: 2px radius, Prussian fill.
    - Secondary actions: underlined text link, never a second boxed button.
 3. **Shape follows importance, near-square (decision 009):** controls (buttons, fields, result cells) 2px · modals, menus and working panels 4px · landing hero panels 28px (revisited at the landing stage) · table rows square with hairline dividers, never card-per-row. The selected nav item has no filled block: ink colour, semibold and a 2px Haematoxylin bar on its left edge.
    - **Avoid the generic look.** For every component, name the usual AI/shadcn default (10px soft rectangles, lavender pill highlights, shimmer skeletons, spinner buttons) and don't use it.
 4. **No badges, pills or eyebrow tags as decoration.** Status (CH, CL, H, L, STAT) is shown as coloured text, not chips, unless a badge is functionally necessary.
 5. **Hierarchy through type, not boxes.** Small muted label above a large figure replaces cards and borders.
 6. **No gradients, shadows (except menus/dialogs), stock illustrations, emoji, or decorative icons.**
-7. **Navigation is role-based.** Each role sees only the 3–6 items it uses.
+7. **Navigation is role-based, in a top bar, never a sidebar (decision 014).** The Prussian top bar holds the lab's name on the left, the 3–6 places this role uses most, and on the right the person's name with a menu (nine-dot button). The menu lists everything else they can do, the theme control and Sign out. Work is laid out across the page by importance, not stacked in a side column.
+7a. **Sign-in pages:** one generous form panel centred over a slowly drifting, heavily blurred blood film (drawn, not a photo), with a Bone or graphite veil for contrast. The lab's name stands large at the top left; the theme control is at the top right. Never a split screen or a card floating on a gradient.
 8. **Tempo:** generous space on landing and public pages; efficient density on bench screens (36–40px rows).
 9. **Flags never rely on colour alone:** H, L, CH, CL always appear as text.
 10. **Grid:** 4px base. Vary container sizes deliberately by importance; never uniform blocks.
@@ -96,13 +98,13 @@ Avoid them. Keep controls enabled and explain on use ("Select at least one test"
 
 ### Focus and motion
 - Visible focus: 2px Haematoxylin ring with a 2px offset. Result entry works fully by keyboard.
-- Motion: 150–200 ms ease-out, for state changes only. Respect reduced-motion. Landing page animation is defined in ANIMATION.md.
+- Motion: 150–200 ms ease-out, for state changes only. Respect reduced-motion. Landing page animation is defined in ANIMATION.md. The one other ambient motion is the sign-in backdrop's slow drift (60 s, transform only, off for reduced motion; decision 014).
 
 ### Copy
 Sentence case. Say what happened, then what to do. No "Oops", "successfully", "please" or exclamation marks.
 
 ## Implementation guardrails (so code can't drift)
-- **Tokens only.** Tailwind config contains only Bone, Haematoxylin and its tints, and Eosin. Default Tailwind colours are removed, so no other colour can be used.
+- **Tokens only.** Tailwind config contains only Bone/graphite, Prussian blue, Eosin and their tints. Default Tailwind colours are removed, so no other colour can be used.
 - **Fonts locked.** `font-serif` = Instrument Serif, `font-sans` = Atkinson Hyperlegible Next, `font-mono` = Atkinson Hyperlegible Mono. No other font families.
 - **Components first, just in time (decision 010).** Pages compose shared components (Button, Field, Table, Banner, Toast, Modal, Skeleton, EmptyState, Flag); no one-off styling in pages. Each component is built when the first page needs it.
 - **/styleguide route** renders every component and state on one page: a living catalogue and the visual-regression baseline, not an approval gate.

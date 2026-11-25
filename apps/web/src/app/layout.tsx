@@ -5,7 +5,9 @@ import {
   Instrument_Serif,
 } from "next/font/google";
 
+import { ThemeController } from "@/components/ui/theme-controller";
 import { serverConfig } from "@/lib/config";
+import { themeBootScript } from "@/lib/theme/theme";
 
 import "@/styles/globals.css";
 
@@ -34,11 +36,22 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
+    // The boot script sets data-theme before paint, so server and client markup
+    // differ on <html> by design (suppressHydrationWarning covers that one element).
     <html
       lang="en"
+      data-theme="light"
+      suppressHydrationWarning
       className={`${atkinsonNext.variable} ${atkinsonMono.variable} ${instrumentSerif.variable}`}
     >
-      <body>{children}</body>
+      <head>
+        {/* Static string from lib/theme (no user data); gets the CSP nonce when proxy.ts lands. */}
+        <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
+      </head>
+      <body>
+        <ThemeController />
+        {children}
+      </body>
     </html>
   );
 }

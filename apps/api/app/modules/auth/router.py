@@ -2,6 +2,7 @@ from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, Request, Response, status
 
+from app.core.config import get_settings
 from app.modules.auth import service
 from app.modules.auth.dependencies import CurrentUser, client_info, require_csrf_header
 from app.modules.auth.schemas import (
@@ -20,10 +21,17 @@ router = APIRouter(prefix="/v1/auth", tags=["auth"])
 COOKIE_PATH = "/api/v1/auth"
 
 
+def _secure() -> bool:
+    # Local dev is plain http://localhost, where Safari (and older Firefox) drop
+    # Secure cookies. Every deployed environment is HTTPS and keeps Secure.
+    return get_settings().environment != "local"
+
+
 def cookie_name(lab_slug: str) -> str:
     # One cookie per lab, so staff of two labs can be signed in to both.
     # `__Secure-` makes browsers refuse the cookie unless it is Secure.
-    return f"__Secure-refresh-{lab_slug}"
+    prefix = "__Secure-" if _secure() else ""
+    return f"{prefix}refresh-{lab_slug}"
 
 
 def _user(account: StaffAccount) -> UserResponse:
@@ -43,7 +51,7 @@ def _respond(signed_in: service.SignedIn, response: Response) -> SessionResponse
         signed_in.refresh_token,
         max_age=max(max_age, 0),
         path=COOKIE_PATH,
-        secure=True,
+        secure=_secure(),
         httponly=True,
         samesite="lax",
     )
@@ -96,7 +104,7 @@ async def sign_out(
         body.lab, request.cookies.get(cookie_name(body.lab)), client_info(request)
     )
     response.delete_cookie(
-        cookie_name(body.lab), path=COOKIE_PATH, secure=True, httponly=True, samesite="lax"
+        cookie_name(body.lab), path=COOKIE_PATH, secure=_secure(), httponly=True, samesite="lax"
     )
 
 

@@ -1,7 +1,7 @@
 # Aliquot — Landing Page Animation
 
 **Status:** Agreed · 18 Nov 2026
-**Scope:** The landing-page hero only. The rest of the landing page uses quiet scroll fades. The lab app, console and public pages have no decorative motion (state changes only, 150–200 ms, per DESIGN.md).
+**Scope:** The landing-page hero. The rest of the landing page uses quiet scroll fades. Sign-in pages have one ambient motion: the blurred blood-film backdrop drifting slowly (60 s, transform only, off for reduced motion; decision 014). The lab app, console and public result pages have no decorative motion (state changes only, 150–200 ms, per DESIGN.md).
 
 ## Concept: "The stain"
 The hero is a full-screen haematology blood film under a microscope. It starts unstained and out of focus. One Eosin drop falls onto the slide, and the Leishman/Wright stain (eosin + methylene blue) spreads from that point: nuclei and platelets turn purple first, then red cells flush pink. A Haematoxylin-ink overlay settles, and the headline appears.

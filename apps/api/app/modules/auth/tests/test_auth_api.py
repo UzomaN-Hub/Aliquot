@@ -8,6 +8,7 @@ from fastapi.testclient import TestClient
 from httpx2 import Response
 from sqlalchemy import Connection, text
 
+from app.core.config import get_settings
 from app.core.security import decode_access_token
 from app.testing import PASSWORD, make_lab, make_user
 
@@ -64,6 +65,17 @@ def test_sign_in_returns_tokens_and_a_locked_down_cookie(
     assert db.execute(text("SELECT count(*) FROM sessions")).scalar() == 1
     assert db.execute(text("SELECT last_login_at IS NOT NULL FROM users")).scalar()
     assert _actions(db) == ["auth.sign_in"]
+
+
+def test_local_dev_cookie_works_on_plain_http(
+    client: TestClient, lab: UUID, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # Safari drops Secure cookies on http://localhost; only local dev relaxes this.
+    monkeypatch.setattr(get_settings(), "environment", "local")
+    cookie = _sign_in(client).headers["set-cookie"]
+    assert cookie.startswith("refresh-demo=")
+    assert "Secure" not in cookie
+    assert "HttpOnly" in cookie
 
 
 def test_email_is_case_insensitive(client: TestClient, lab: UUID) -> None:

@@ -74,7 +74,7 @@ export type ControlSize = "md" | "lg";
 export function controlClasses(invalid: boolean, size: ControlSize): string {
   return cn(
     "w-full rounded-control border bg-transparent text-ink transition-colors",
-    "placeholder:text-ink-muted hover:border-ink-muted focus-visible:border-ink",
+    "placeholder:text-ink-muted hover:border-ink-muted focus-visible:border-primary",
     "read-only:border-hairline read-only:bg-hover",
     "disabled:cursor-not-allowed disabled:border-hairline disabled:text-ink-muted",
     invalid ? "border-eosin hover:border-eosin focus-visible:border-eosin" : "border-ink-faint",
