@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 import { ApiError, apiRequest } from "@/lib/api/client";
 import type { Session } from "@/stores/session";
 
@@ -58,4 +60,21 @@ export async function refreshSession(lab: string): Promise<Session | null> {
 
 export async function signOut(lab: string): Promise<void> {
   await apiRequest("/auth/sign-out", null, { method: "POST", body: { lab }, headers: CSRF });
+}
+
+const linkSchema = z.object({
+  purpose: z.enum(["invite", "reset"]),
+  full_name: z.string(),
+  email: z.string(),
+  lab_name: z.string(),
+});
+export type LinkInfo = z.infer<typeof linkSchema>;
+
+/** Who an invite/reset link is for. The token travels in the body, never a URL. */
+export function checkLink(lab: string, token: string): Promise<LinkInfo> {
+  return apiRequest("/auth/link", linkSchema, { method: "POST", body: { lab, token } });
+}
+
+export async function setPassword(lab: string, token: string, password: string): Promise<void> {
+  await apiRequest("/auth/set-password", null, { method: "POST", body: { lab, token, password } });
 }

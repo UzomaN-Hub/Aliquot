@@ -3,10 +3,7 @@
 import Link from "next/link";
 import { DropdownMenu } from "radix-ui";
 
-import { useSignOut } from "@/features/auth/hooks";
-import { roleLabels } from "@/lib/format/labels";
 import type { ThemePreference } from "@/lib/theme/theme";
-import type { Session } from "@/stores/session";
 import { useThemeStore } from "@/stores/theme";
 
 export type MenuDestination = { href: string; label: string; description: string };
@@ -21,20 +18,27 @@ const itemClass =
   "flex cursor-pointer flex-col rounded-control px-3 py-2 text-body outline-none data-[highlighted]:bg-selected";
 
 /**
- * The top-right menu (decision 014): everything this person can do, their account,
- * the theme, and Sign out. Radix gives it the menu keyboard model (arrows, Esc,
- * typeahead) and focus return; we give it the look.
+ * The top-right menu (decision 014): everything this person can do, who they are,
+ * the theme, and Sign out. Used by the lab app and the platform console.
+ * Radix gives it the menu keyboard model (arrows, Esc, typeahead) and focus return.
  */
 export function AppMenu({
-  session,
+  name,
+  email,
+  detail,
   destinations,
+  onSignOut,
+  signingOut,
 }: {
-  session: Session;
+  name: string;
+  email: string;
+  detail: string;
   destinations: MenuDestination[];
+  onSignOut: () => void;
+  signingOut: boolean;
 }) {
   const preference = useThemeStore((state) => state.preference);
   const setPreference = useThemeStore((state) => state.setPreference);
-  const { signOut, pending } = useSignOut(session.lab.slug);
 
   return (
     <DropdownMenu.Root>
@@ -57,11 +61,9 @@ export function AppMenu({
           className="z-50 w-80 rounded-panel border border-hairline bg-surface-raised p-2 text-ink shadow-overlay"
         >
           <div className="px-3 pt-2 pb-3">
-            <p className="text-body font-medium">{session.user.fullName}</p>
-            <p className="text-caption text-ink-muted">{session.user.email}</p>
-            <p className="mt-1 text-caption text-ink-secondary">
-              {session.user.roles.map((role) => roleLabels[role]).join(", ")} · {session.lab.name}
-            </p>
+            <p className="text-body font-medium">{name}</p>
+            <p className="text-caption text-ink-muted">{email}</p>
+            <p className="mt-1 text-caption text-ink-secondary">{detail}</p>
           </div>
           <DropdownMenu.Separator className="my-1 h-px bg-hairline" />
 
@@ -99,12 +101,8 @@ export function AppMenu({
           </DropdownMenu.RadioGroup>
           <DropdownMenu.Separator className="my-1 h-px bg-hairline" />
 
-          <DropdownMenu.Item
-            disabled={pending}
-            onSelect={() => void signOut()}
-            className={itemClass}
-          >
-            {pending ? "Signing out…" : "Sign out"}
+          <DropdownMenu.Item disabled={signingOut} onSelect={onSignOut} className={itemClass}>
+            {signingOut ? "Signing out…" : "Sign out"}
           </DropdownMenu.Item>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>

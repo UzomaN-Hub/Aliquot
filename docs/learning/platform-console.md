@@ -19,6 +19,19 @@ The console connects as `aliquot_platform`. It can **insert** a lab's first Mana
 ## Invite links
 `/l/<lab>/set-password#token=…`: the token is in the **fragment** (after `#`), which browsers never send to any server. The page reads it and posts it in the request body.
 
+## The console screens (`apps/web`)
+| URL | What |
+| --- | --- |
+| `/console/sign-in` | Password, then the 6-digit code; on first sign-in, a QR code to scan |
+| `/console` | Labs: count, table (name, address, status, staff, created), "Create a lab" |
+| `/console/labs/new` | Lab details, sections, first Manager → shows the invite link once, with Copy |
+| `/console/labs/<id>` | Facts, Edit details, Suspend/Reactivate (dialog asks for a reason) |
+| `/l/<lab>/set-password#token=…` | The invited Manager chooses a password |
+
+- **TanStack Query** (`features/console/queries.ts`) fetches and caches the labs; after a create, edit or suspend it refreshes the list automatically. Keys come from one factory (`consoleKeys`).
+- **Token refresh:** `withToken()` renews a token that's about to expire, and on a 401 refreshes once and retries (FRONTEND.md §5).
+- **Idempotency keys** are made per submit with `crypto.randomUUID()`.
+
 ## Commands (from `apps/api`)
 | Want to | Command |
 | --- | --- |

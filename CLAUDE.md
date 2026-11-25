@@ -94,6 +94,8 @@ All decisions live in `docs/`. Read the ones relevant to the task before writing
 | Run web | `pnpm dev` (from `apps/web`) → http://localhost:3000, `/api/v1/*` proxied to the API |
 | Styleguide | http://localhost:3000/styleguide while `pnpm dev` runs (deployed builds: only with `STYLEGUIDE_ENABLED=true`) |
 | Local database setup | `uv run python -m app.scripts.dev_db` (from `apps/api`; migrates, sets the app role password, seeds Tavnit Labs, our fictional working lab, at `/l/tavnit`; staff list and password are printed) |
+| Platform console | http://localhost:3000/console/sign-in as `admin@platform.example` (local only, printed by `dev_db`); 2FA set up on first sign-in with an authenticator app |
+| Create a super-admin (staging/production) | `uv run python -m app.scripts.create_platform_admin` (from `apps/api`; hidden prompts, run on your own computer, never in CI) |
 | Migrate | `uv run alembic upgrade head` (roll back: `uv run alembic downgrade base`) |
 | Backend tests | `uv run pytest` (needs Docker Postgres running; builds its own `aliquot_test` database) |
 | Frontend tests | `pnpm test` |

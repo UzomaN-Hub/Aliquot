@@ -12,6 +12,25 @@ export const signInSchema = z.object({
 
 export type SignInValues = z.infer<typeof signInSchema>;
 
+export const MIN_PASSWORD_LENGTH = 12;
+
+/** First password from an invite (or a new one from a reset). */
+export const setPasswordSchema = z
+  .object({
+    password: z
+      .string()
+      .min(
+        MIN_PASSWORD_LENGTH,
+        `Use at least ${MIN_PASSWORD_LENGTH} characters. A short sentence works well.`,
+      ),
+    confirm: z.string().min(1, "Type the password again."),
+  })
+  .refine((values) => values.password === values.confirm, {
+    path: ["confirm"],
+    message: "The two passwords don't match.",
+  });
+export type SetPasswordValues = z.infer<typeof setPasswordSchema>;
+
 const role = z.enum(["manager", "chief_scientist", "lab_scientist", "front_desk"]);
 const section = z.enum(["chem_path", "haematology", "microbiology"]);
 
