@@ -93,7 +93,7 @@ All decisions live in `docs/`. Read the ones relevant to the task before writing
 | Web first time | `pnpm install`, then copy `.env.example` to `.env.local` (from `apps/web`) |
 | Run web | `pnpm dev` (from `apps/web`) → http://localhost:3000, `/api/v1/*` proxied to the API |
 | Styleguide | http://localhost:3000/styleguide while `pnpm dev` runs (deployed builds: only with `STYLEGUIDE_ENABLED=true`) |
-| Local database setup | `uv run python -m app.scripts.dev_db` (from `apps/api`; migrates, sets the app role password, seeds the fictional demo lab at `/l/demo`) |
+| Local database setup | `uv run python -m app.scripts.dev_db` (from `apps/api`; migrates, sets the app role password, seeds Tavnit Labs, our fictional working lab, at `/l/tavnit`; staff list and password are printed) |
 | Migrate | `uv run alembic upgrade head` (roll back: `uv run alembic downgrade base`) |
 | Backend tests | `uv run pytest` (needs Docker Postgres running; builds its own `aliquot_test` database) |
 | Frontend tests | `pnpm test` |
