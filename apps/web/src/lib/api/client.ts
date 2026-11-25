@@ -29,7 +29,7 @@ const errorBody = z.object({
 });
 
 type RequestOptions = {
-  method?: "GET" | "POST";
+  method?: "GET" | "POST" | "PATCH";
   body?: unknown;
   headers?: Record<string, string>;
   accessToken?: string;
