@@ -19,10 +19,10 @@ const buttonVariants = cva(
     variants: {
       variant: {
         primary:
-          "rounded-control bg-primary font-medium text-on-primary hover:bg-ink-secondary disabled:cursor-not-allowed disabled:border disabled:border-hairline disabled:bg-surface disabled:text-ink-muted",
+          "rounded-control bg-primary font-medium text-on-primary hover:bg-primary/90 disabled:cursor-not-allowed disabled:border disabled:border-hairline disabled:bg-surface disabled:text-ink-muted",
         link: "rounded-control text-ink underline decoration-ink-faint decoration-1 underline-offset-4 hover:decoration-ink disabled:cursor-not-allowed disabled:text-ink-muted disabled:no-underline",
         marketing:
-          "rounded-full bg-primary font-medium text-on-primary hover:bg-ink-secondary disabled:cursor-not-allowed",
+          "rounded-full bg-primary font-medium text-on-primary hover:bg-primary/90 disabled:cursor-not-allowed",
       },
       size: {
         md: "",

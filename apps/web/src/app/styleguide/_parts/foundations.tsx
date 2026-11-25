@@ -3,7 +3,9 @@ import { Section, Specimen, ThemePair } from "./specimen";
 // Class names are written out in full so Tailwind can find them.
 const colours = [
   { name: "surface", className: "bg-surface", use: "Every background (Bone)" },
-  { name: "ink", className: "bg-ink", use: "Text, primary button (Haematoxylin)" },
+  { name: "ink", className: "bg-ink", use: "Text (near-black / off-white)" },
+  { name: "primary", className: "bg-primary", use: "Buttons, highlights (Prussian blue)" },
+  { name: "bar", className: "bg-bar", use: "Top bar" },
   { name: "ink-secondary", className: "bg-ink-secondary", use: "Secondary text" },
   { name: "ink-muted", className: "bg-ink-muted", use: "Smallest text colour allowed" },
   { name: "ink-faint", className: "bg-ink-faint", use: "Non-text only: field edges, marks" },
@@ -20,7 +22,7 @@ export function Foundations() {
       <Section
         id="colour"
         title="Colour"
-        intro="Bone, Haematoxylin and Eosin, plus tints mixed from them. Nothing else exists in the code."
+        intro="Light: Bone with Prussian blue. Dark: graphite. Eosin for critical only. Tints of these and nothing else exist in the code (decision 014)."
       >
         <ThemePair>
           <ul className="grid gap-x-6 gap-y-3 sm:grid-cols-2">

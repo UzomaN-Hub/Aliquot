@@ -64,7 +64,6 @@ export function SignInForm({ lab }: { lab: string }) {
 
   return (
     <form noValidate onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
-      <p className="text-body-lg text-ink-secondary">Sign in with your work email.</p>
       <FormError message={formError} />
       <Field label="Email" error={errors.email?.message}>
         <Input
@@ -80,10 +79,11 @@ export function SignInForm({ lab }: { lab: string }) {
       <Field label="Password" error={errors.password?.message}>
         <PasswordInput size="lg" autoComplete="current-password" {...register("password")} />
       </Field>
-      <div className="pt-2">
+      <div className="pt-3">
         <Button
           type="submit"
           size="lg"
+          className="w-full"
           pending={isSubmitting || redirecting}
           pendingLabel="Signing in…"
         >

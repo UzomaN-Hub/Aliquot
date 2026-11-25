@@ -25,5 +25,8 @@ Only screens in this folder are approved. Build from these, styled by ../DESIGN.
 - Show all rows (no "Showing 10 of 18", no "View archive log").
 - No-results state keeps the real count ("18 waiting"); no footer; normal hairline search border.
 
+## Superseded (decision 014, 25 Nov 2026)
+The colours (Haematoxylin), the sidebar in 02 and the split/centred-card login are superseded: Prussian blue / graphite, a top bar with a menu, and a centred sign-in panel over a blurred blood film. Use these files for content and density only.
+
 ## Approach from here
 Stitch is retired. Remaining pages are built directly in code from DESIGN.md and the components in /styleguide, reviewed by screenshot.

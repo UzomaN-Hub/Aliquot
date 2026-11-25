@@ -4,16 +4,17 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 
-import { SignOutButton } from "@/features/auth/components/sign-out-button";
-import { roleLabels } from "@/lib/format/labels";
+import { firstName, roleLabels } from "@/lib/format/labels";
 import { cn } from "@/lib/cn";
 import { useSessionStore } from "@/stores/session";
 
+import { AppMenu, type MenuDestination } from "./app-menu";
+
 /**
- * Signed-in lab shell (designs/02 with its required fixes): lab name, role-based
- * navigation, the person and "Sign out" at the foot. No top bar, no avatar.
- * The selected item is ink, semibold, with a 2px bar on its left (decision 009).
- * Items appear here as their pages ship (DESIGN.md rule 7: 3–6 per role).
+ * Signed-in lab shell (decision 014): a Prussian-blue top bar, no sidebar.
+ * Left: the lab's name. Middle: the few places this role uses most (DESIGN.md rule 7).
+ * Right: who is signed in and the menu with everything else.
+ * Destinations are added here as their pages ship.
  */
 export function AppShell({ children }: { children: ReactNode }) {
   const session = useSessionStore((state) => state.session);
@@ -21,46 +22,57 @@ export function AppShell({ children }: { children: ReactNode }) {
   if (!session) return null; // the SessionGate above guarantees a session
 
   const base = `/l/${session.lab.slug}`;
-  const items = [{ href: base, label: "Home" }];
+  const destinations: MenuDestination[] = [
+    { href: base, label: "Home", description: "Today at a glance" },
+  ];
+  const primaryRole = session.user.roles[0];
 
   return (
-    <div className="min-h-dvh lg:grid lg:grid-cols-[240px_minmax(0,1fr)]">
-      <aside className="flex flex-col gap-8 border-b border-hairline px-6 py-6 lg:sticky lg:top-0 lg:h-dvh lg:border-r lg:border-b-0 lg:py-8">
-        <p className="font-serif text-title tracking-headline">{session.lab.name}</p>
-        <nav aria-label="Main">
-          <ul className="flex flex-col gap-1">
-            {items.map((item) => {
-              const current = pathname === item.href;
-              return (
-                <li key={item.href}>
-                  <Link
-                    href={item.href}
-                    aria-current={current ? "page" : undefined}
-                    className={cn(
-                      "relative block py-1.5 pl-3 text-body transition-colors",
-                      current
-                        ? "font-semibold text-ink before:absolute before:inset-y-1 before:left-0 before:w-0.5 before:bg-ink"
-                        : "text-ink-secondary hover:text-ink",
-                    )}
-                  >
-                    {item.label}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </nav>
-        <div className="mt-auto flex flex-col gap-1 border-t border-hairline pt-4">
-          <p className="text-body font-medium">{session.user.fullName}</p>
-          <p className="text-caption text-ink-muted">
-            {session.user.roles.map((role) => roleLabels[role]).join(", ")}
-          </p>
-          <div className="pt-1">
-            <SignOutButton lab={session.lab.slug} />
+    <div className="min-h-dvh">
+      <header className="sticky top-0 z-30 bg-bar text-on-bar">
+        <div className="mx-auto flex h-16 max-w-[1440px] items-center gap-10 px-6 sm:px-10">
+          <Link href={base} className="font-serif text-title leading-none tracking-headline">
+            {session.lab.name}
+          </Link>
+          <nav aria-label="Main" className="hidden h-full md:block">
+            <ul className="flex h-full items-stretch gap-7">
+              {destinations.map((item) => {
+                const current = pathname === item.href;
+                return (
+                  <li key={item.href} className="flex">
+                    <Link
+                      href={item.href}
+                      aria-current={current ? "page" : undefined}
+                      className={cn(
+                        "relative flex items-center text-body transition-colors",
+                        current
+                          ? "font-semibold text-on-bar after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-on-bar"
+                          : "text-on-bar-muted hover:text-on-bar",
+                      )}
+                    >
+                      {item.label}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </nav>
+          <div className="ml-auto flex items-center gap-4">
+            <p className="hidden text-right leading-tight sm:block">
+              <span className="block text-body font-medium">
+                {firstName(session.user.fullName)}
+              </span>
+              {primaryRole && (
+                <span className="block text-caption text-on-bar-muted">
+                  {roleLabels[primaryRole]}
+                </span>
+              )}
+            </p>
+            <AppMenu session={session} destinations={destinations} />
           </div>
         </div>
-      </aside>
-      <main className="px-6 pt-12 pb-16 sm:px-10">{children}</main>
+      </header>
+      <main className="mx-auto max-w-[1440px] px-6 pt-12 pb-16 sm:px-10">{children}</main>
     </div>
   );
 }

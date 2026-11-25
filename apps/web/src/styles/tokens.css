@@ -1,67 +1,68 @@
 /*
- * Design tokens (DESIGN.md). The ONLY place colour values live.
- * Three colours: Bone, Haematoxylin, Eosin, plus tints (mixes) of them.
- * Contrast-safe adjustments: decision 008.
+ * Design tokens (DESIGN.md, decision 014). The ONLY place colour values live.
+ * Light: off-white (Bone) with Prussian blue. Dark: graphite with off-white text.
+ * Eosin is for critical values only, in both. Tones stay muted: nothing glossy.
  *
- * Tailwind utilities use semantic names (bg-surface, text-ink, text-eosin-text…),
- * so components never need `dark:` variants: the variables flip instead.
+ * Components use semantic names (bg-surface, text-ink, bg-primary…), so they never
+ * need `dark:` variants: these variables flip with <html data-theme>.
+ * The theme is chosen by lib/theme (Auto by time of day, or the person's choice),
+ * not by the operating system.
  */
 
-/* ── Light (default) ─────────────────────────────────────────── */
+/* ── Light: Bone + Prussian blue ─────────────────────────────── */
 :root,
 [data-theme="light"] {
   color-scheme: light;
-  --surface: #f6f3ec; /* Bone: all backgrounds */
-  --ink: #221d45; /* Haematoxylin: text, nav (14.3:1 on Bone) */
-  --ink-secondary: #4a4470; /* 8.1:1 */
-  --ink-muted: #5e5880; /* 6.0:1: smallest allowed text colour */
-  --ink-faint: #8a85a3; /* 3.2:1: NON-TEXT only (placeholders' icons, dividers that must be seen) */
-  --selected: #e9e5f2; /* selected row, warning background */
-  --hover: #efecf5; /* row hover */
-  --hairline: #e4dfd3; /* dividers, field borders (warm, from Bone) */
-  --primary: #221d45; /* filled primary button */
+  --surface: #f6f3ec; /* Bone: every page background */
+  --surface-raised: #fbf9f4; /* panels that sit on the page (sign-in form, menus) */
+  --ink: #1f1e1c; /* near-black text: 15.2:1 on Bone */
+  --ink-secondary: #4a4843; /* 8.6:1 */
+  --ink-muted: #5f5c57; /* 6.3:1: smallest allowed text colour */
+  --ink-faint: #85827c; /* 3.4:1: NON-TEXT only (field edges, underlines) */
+  --primary: #1b3a5c; /* Prussian blue: buttons, top bar, highlights. 10.9:1 */
   --on-primary: #f6f3ec;
-  --eosin: #e0566f; /* fills, borders, critical marks (non-text) */
-  --eosin-text: #b23b56; /* Eosin text: 5.2:1 on Bone, 4.6:1 on selected */
-  --overlay-shadow: rgb(34 29 69 / 0.18); /* Haematoxylin at 18% */
-  --scrim: rgb(34 29 69 / 0.4); /* behind modals */
+  --primary-tint: #e3e8ee; /* selected row, warning background */
+  --hover: #edeeee; /* row hover */
+  --hairline: #e4dfd3; /* dividers (warm, from Bone) */
+  --bar: #1b3a5c; /* top bar */
+  --on-bar: #f6f3ec;
+  --on-bar-muted: #bcc7d3; /* secondary text on the bar: 6.9:1 */
+  --eosin: #e0566f; /* critical fills and borders (non-text) */
+  --eosin-text: #b23b56; /* critical text: 5.2:1 on Bone, 4.7:1 on primary-tint */
+  --overlay-shadow: rgb(31 30 28 / 0.14);
+  --scrim: rgb(31 30 28 / 0.4);
+  --veil: rgb(246 243 236 / 0.62); /* over the sign-in background image */
+
+  /* The drawn blood film behind sign-in (Leishman-stained look, muted). Same in
+     both themes; only the veil above it changes. Never used for text. */
+  --stain-plasma: #efe5e1;
+  --stain-cell: #d9a0aa;
+  --stain-cell-centre: #ecd3d4;
+  --stain-cytoplasm: #e6dde6;
+  --stain-nucleus: #4f5d86;
+  --stain-platelet: #7d7aa0;
 }
 
-/* ── Dark: Haematoxylin background, Bone text, Eosin kept ───── */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    color-scheme: dark;
-    --surface: #221d45;
-    --ink: #f6f3ec; /* 14.3:1 */
-    --ink-secondary: #c1bdc2; /* Bone 75% · 8.5:1 */
-    --ink-muted: #a5a2ad; /* Bone 62% · 6.3:1 */
-    --ink-faint: #8c8899; /* Bone 50% · 4.6:1 */
-    --selected: #332e52; /* Bone 8% */
-    --hover: #2b2649; /* Bone 4% */
-    --hairline: #484463; /* Bone 18% */
-    --primary: #f6f3ec;
-    --on-primary: #221d45;
-    --eosin: #e0566f;
-    --eosin-text: #e67d8e; /* Eosin 75% + Bone · 5.8:1 on bg, 4.7:1 on selected */
-    --overlay-shadow: rgb(0 0 0 / 0.35);
-    --scrim: rgb(14 11 33 / 0.6);
-  }
-}
-
+/* ── Dark: graphite + off-white, Prussian softened ───────────── */
 [data-theme="dark"] {
   color-scheme: dark;
-  --surface: #221d45;
-  --ink: #f6f3ec;
-  --ink-secondary: #c1bdc2;
-  --ink-muted: #a5a2ad;
-  --ink-faint: #8c8899;
-  --selected: #332e52;
-  --hover: #2b2649;
-  --hairline: #484463;
-  --primary: #f6f3ec;
-  --on-primary: #221d45;
+  --surface: #1e1e1c; /* graphite */
+  --surface-raised: #262523;
+  --ink: #f2efe8; /* 15.6:1 */
+  --ink-secondary: #c9c5bd; /* 10.6:1 */
+  --ink-muted: #a8a49c; /* 7.0:1 */
+  --ink-faint: #6f6c66; /* 3.3:1: NON-TEXT only */
+  --primary: #a9bcd0; /* Prussian blue, softened for dark: buttons, highlights */
+  --on-primary: #1e1e1c; /* 8.9:1 */
+  --primary-tint: #2c3138;
+  --hover: #282827;
+  --hairline: #3a3936;
+  --bar: #262523;
+  --on-bar: #f2efe8;
+  --on-bar-muted: #a8a49c;
   --eosin: #e0566f;
-  --eosin-text: #e67d8e;
-  --overlay-shadow: rgb(0 0 0 / 0.35);
-  --scrim: rgb(14 11 33 / 0.6);
+  --eosin-text: #eb8a9a; /* 7.1:1 on graphite, 5.9:1 on primary-tint */
+  --overlay-shadow: rgb(0 0 0 / 0.4);
+  --scrim: rgb(0 0 0 / 0.55);
+  --veil: rgb(30 30 28 / 0.72);
 }

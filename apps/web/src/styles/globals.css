@@ -7,21 +7,26 @@
  * fourth font simply don't exist. Guardrails: DESIGN.md "Implementation".
  */
 @theme inline {
-  /* Colours: only the three + tints, by role. */
+  /* Colours: Bone/graphite, Prussian blue, Eosin, and tints of them, by role. */
   --color-*: initial;
   --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
   --color-ink: var(--ink);
   --color-ink-secondary: var(--ink-secondary);
   --color-ink-muted: var(--ink-muted);
   --color-ink-faint: var(--ink-faint);
-  --color-selected: var(--selected);
+  --color-selected: var(--primary-tint);
   --color-hover: var(--hover);
   --color-hairline: var(--hairline);
   --color-primary: var(--primary);
   --color-on-primary: var(--on-primary);
+  --color-bar: var(--bar);
+  --color-on-bar: var(--on-bar);
+  --color-on-bar-muted: var(--on-bar-muted);
   --color-eosin: var(--eosin);
   --color-eosin-text: var(--eosin-text);
   --color-scrim: var(--scrim);
+  --color-veil: var(--veil);
 
   /* Fonts: exactly three (loaded with next/font in app/layout.tsx). */
   --font-*: initial;
@@ -95,9 +100,9 @@
     font-variant-numeric: tabular-nums;
   }
 
-  /* Visible focus: 2px Haematoxylin ring, 2px offset (flips in dark mode). */
+  /* Visible focus: 2px primary ring, 2px offset (softened Prussian in dark mode). */
   :focus-visible {
-    outline: 2px solid var(--color-ink);
+    outline: 2px solid var(--color-primary);
     outline-offset: 2px;
   }
 
@@ -109,6 +114,27 @@
   @keyframes skeleton-in {
     to {
       opacity: 1;
+    }
+  }
+
+  /* Sign-in backdrop: a slow drift, the only motion outside the landing hero
+     (decision 014). Transform only, so it never triggers layout. */
+  .stain-drift {
+    animation: stain-drift 60s ease-in-out infinite alternate;
+    will-change: transform;
+  }
+  @keyframes stain-drift {
+    from {
+      transform: translate3d(-2%, -1.5%, 0) scale(1.02);
+    }
+    to {
+      transform: translate3d(2%, 1.5%, 0) scale(1.08);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .stain-drift {
+      animation: none;
     }
   }
 
