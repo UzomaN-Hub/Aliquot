@@ -122,6 +122,7 @@
   .stain-drift {
     animation: stain-drift 60s ease-in-out infinite alternate;
     will-change: transform;
+    opacity: var(--stain-film-opacity, 1);
   }
   @keyframes stain-drift {
     from {

@@ -47,16 +47,16 @@
 [data-theme="dark"] {
   color-scheme: dark;
   --surface: #1e1e1c; /* graphite */
-  --surface-raised: #262523;
+  --surface-raised: #2a2927; /* panels must read as lifted off the page */
   --ink: #f2efe8; /* 15.6:1 */
   --ink-secondary: #c9c5bd; /* 10.6:1 */
-  --ink-muted: #a8a49c; /* 7.0:1 */
-  --ink-faint: #6f6c66; /* 3.3:1: NON-TEXT only */
+  --ink-muted: #a8a49c; /* 7.0:1 on graphite, 5.8:1 on raised */
+  --ink-faint: #7a7770; /* NON-TEXT only: 3.6:1 on graphite, 3.2:1 on raised */
   --primary: #a9bcd0; /* Prussian blue, softened for dark: buttons, highlights */
   --on-primary: #1e1e1c; /* 8.9:1 */
   --primary-tint: #2c3138;
   --hover: #282827;
-  --hairline: #3a3936;
+  --hairline: #403e3a;
   --bar: #262523;
   --on-bar: #f2efe8;
   --on-bar-muted: #a8a49c;
@@ -64,5 +64,8 @@
   --eosin-text: #eb8a9a; /* 7.1:1 on graphite, 5.9:1 on primary-tint */
   --overlay-shadow: rgb(0 0 0 / 0.4);
   --scrim: rgb(0 0 0 / 0.55);
-  --veil: rgb(30 30 28 / 0.72);
+  --veil: rgb(30 30 28 / 0.6);
+  /* The drawn film is light; in the dark it is dimmed to a faint texture so the
+     form panel, not the backdrop, is the brightest thing on screen. */
+  --stain-film-opacity: 0.28;
 }
