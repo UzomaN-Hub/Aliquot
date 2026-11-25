@@ -42,6 +42,9 @@
 - `uv sync --locked` — installs exactly `uv.lock`; **fails** if `pyproject.toml` and `uv.lock` disagree (you forgot to commit the lock).
 - Then the same checks as on the laptop: `ruff check` (`--output-format=github` puts errors as comments on the PR's lines), `ruff format --check`, `mypy`, `pytest`.
 - `timeout-minutes` — a stuck job is killed instead of burning minutes for 6 hours.
+- `services: postgres` — a **service container**: GitHub starts `postgres:17-alpine` next to the job, waits for its health check, and exposes it on `127.0.0.1:5432`. Tests run against real Postgres, so RLS, roles and migrations are proven, not mocked. It's thrown away after the job.
+- `env:` database lines — dummy credentials that only exist inside that throwaway container. `TEST_DB_ADMIN_URL` lets pytest create its own `aliquot_test` database.
+- "Migrations up, down, up" — applies every migration, rolls all of them back, applies again. Catches a broken `downgrade()` before it's needed in an emergency.
 
 **Job `web`** — same shape as `api`, for `apps/web/**`.
 - `pnpm/action-setup` installs the pnpm version named in `apps/web/package.json` (`packageManager`), so CI and laptop match.
@@ -54,8 +57,22 @@
 - It fails if any job in `needs:` failed or was cancelled; "skipped" counts as fine.
 - Adding a job later = add it to `needs:`; the ruleset never changes.
 
+## `deploy-staging.yml`, part by part
+**Trigger `workflow_run`** — runs when the **CI** workflow *finishes* on `main`; the first job checks it *passed*. A red `main` never deploys. `workflow_dispatch` adds a manual "Run workflow" button.
+**`head_sha`** — every job checks out the exact commit CI tested, not whatever `main` has become since.
+**`concurrency` with `cancel-in-progress: false`** — two quick merges deploy one after the other; a migration is never killed halfway.
+**Job `changes`** — squash merges make one commit per PR, so `git diff HEAD~1 HEAD` is the whole PR. Web-only merges skip the API deploy (Vercel handles the web).
+**Job `migrate`** — `alembic upgrade head` against Supabase **before** the new code starts, so new code never meets an old schema. `--no-dev` installs only runtime packages. The connection string comes from the secret `STAGING_MIGRATION_DATABASE_URL` (owner role, Session pooler).
+**Job `deploy-api`**
+- Calls Render's **deploy hook** (secret `RENDER_DEPLOY_HOOK_URL`) with `ref=<sha>`.
+- Polls `/health` until it reports that commit (Render sets `RENDER_GIT_COMMIT`), so the job never "passes" against the old version.
+- **Smoke test:** asks for a lab that doesn't exist. A clean `404 lab_not_found` proves the API reached Postgres; a 500 means it can't.
+**`environment: staging`** — groups the deploy jobs on GitHub's Environments page; protection rules (for example, required approval) can be added later without changing the YAML.
+
+**Secrets** live in GitHub → Settings → Secrets and variables → Actions. A workflow reads them as `${{ secrets.NAME }}`; GitHub hides them in logs. They never appear in the repo.
+
 ## Coming next in this file
-Postgres + Redis **service containers** (when the first migration lands), the 150 KB bundle budget, E2E, security scans. Then `deploy-staging.yml` and `release.yml` (CONVENTIONS.md §4).
+Redis service container (with the worker), the 150 KB bundle budget, E2E, security scans. Then `deploy-staging.yml` (migrate staging, then deploy) and `release.yml` (CONVENTIONS.md §4).
 
 ## Where it's used in Aliquot
 - `.github/workflows/ci.yml`

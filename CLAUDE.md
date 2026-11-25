@@ -93,8 +93,9 @@ All decisions live in `docs/`. Read the ones relevant to the task before writing
 | Web first time | `pnpm install`, then copy `.env.example` to `.env.local` (from `apps/web`) |
 | Run web | `pnpm dev` (from `apps/web`) → http://localhost:3000, `/api/v1/*` proxied to the API |
 | Styleguide | http://localhost:3000/styleguide while `pnpm dev` runs (deployed builds: only with `STYLEGUIDE_ENABLED=true`) |
-| Migrate | `uv run alembic upgrade head` |
-| Backend tests | `uv run pytest` |
+| Local database setup | `uv run python -m app.scripts.dev_db` (from `apps/api`; migrates, sets the app role password, seeds the fictional demo lab at `/l/demo`) |
+| Migrate | `uv run alembic upgrade head` (roll back: `uv run alembic downgrade base`) |
+| Backend tests | `uv run pytest` (needs Docker Postgres running; builds its own `aliquot_test` database) |
 | Frontend tests | `pnpm test` |
 | End-to-end | `pnpm e2e` |
 | Lint + types | `uv run ruff check .; uv run ruff format --check .; uv run mypy .` · `pnpm lint; pnpm format:check; pnpm typecheck` (PowerShell 5.1 has no `&&`) |

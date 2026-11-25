@@ -75,13 +75,34 @@ jobs:
     defaults:
       run:
         working-directory: apps/api
+    # A real Postgres 17 next to the job, so RLS, roles and migrations are tested
+    # for real, the same version as Supabase and docker-compose.
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: aliquot
+          POSTGRES_PASSWORD: aliquot_dev
+          POSTGRES_DB: aliquot
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U aliquot -d aliquot"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
     env:
       # The app refuses to start without these (app/core/config.py).
-      # Dummy values: tests never reach a real service.
+      # Dummy values that only work against the throwaway CI database.
       ENVIRONMENT: test
       PLATFORM_NAME: Aliquot
       PLATFORM_DOMAIN: localhost
       TENANT_MODE: path
+      DATABASE_URL: postgresql+psycopg://aliquot_app:aliquot_app_dev@127.0.0.1:5432/aliquot
+      MIGRATION_DATABASE_URL: postgresql+psycopg://aliquot:aliquot_dev@127.0.0.1:5432/aliquot
+      JWT_SECRET: ci-only-secret-that-is-at-least-32-characters
+      # pytest builds its own database (aliquot_test) through this admin connection.
+      TEST_DB_ADMIN_URL: postgresql+psycopg://aliquot:aliquot_dev@127.0.0.1:5432/postgres
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -107,7 +128,14 @@ jobs:
       - name: Type check (mypy strict)
         run: uv run mypy .
 
-      - name: Tests (pytest)
+      # Every migration must apply, roll back and apply again (CONVENTIONS.md §7).
+      - name: Migrations up, down, up
+        run: |
+          uv run alembic upgrade head
+          uv run alembic downgrade base
+          uv run alembic upgrade head
+
+      - name: Tests (pytest, real Postgres)
         run: uv run pytest
 
       # Render builds this same Dockerfile; catch a broken image before merge.

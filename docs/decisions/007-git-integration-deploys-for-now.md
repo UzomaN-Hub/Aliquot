@@ -1,6 +1,6 @@
 # 007 — Deploy through Render and Vercel Git integrations until migrations exist
 
-**Date:** 2026-11-23 · **Status:** Accepted
+**Date:** 2026-11-23 · **Status:** Accepted. API part superseded on 2026-11-25: with the first migration, `deploy-staging.yml` (migrate → Render deploy hook → health + smoke) replaced Render's auto-deploy. Vercel still deploys the web through its Git integration.
 
 ## Context
 CONVENTIONS.md §4 plans `deploy-staging.yml`: on merge to `main`, run migrations on staging, then deploy API and worker, then the web, then smoke tests. Today there is no database, no migration and no worker; just an empty web and an API with `/health`.
