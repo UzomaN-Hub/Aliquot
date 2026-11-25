@@ -42,24 +42,46 @@ class Base(DeclarativeBase):
     type_annotation_map: ClassVar[dict[Any, Any]] = {datetime: DateTime(timezone=True)}
 
 
-@lru_cache
-def get_engine() -> AsyncEngine:
-    settings = get_settings()
+def _engine(url: str) -> AsyncEngine:
     options: dict[str, Any] = {
         # Behind Supabase's transaction pooler one server connection serves many
         # clients, so server-side prepared statements must stay off (decision 011).
         "connect_args": {"prepare_threshold": None},
         "pool_pre_ping": True,
     }
-    if settings.environment == "test":
+    if get_settings().environment == "test":
         # Each test client runs its own event loop; pooled connections can't cross loops.
         options["poolclass"] = NullPool
-    return create_async_engine(settings.database_url, **options)
+    return create_async_engine(url, **options)
+
+
+@lru_cache
+def get_engine() -> AsyncEngine:
+    """The lab app's connection: role aliquot_app (decision 012)."""
+    return _engine(get_settings().database_url)
+
+
+@lru_cache
+def get_platform_engine() -> AsyncEngine:
+    """The console's connection: role aliquot_platform (decision 015)."""
+    return _engine(get_settings().platform_database_url)
 
 
 @lru_cache
 def _sessionmaker() -> async_sessionmaker[AsyncSession]:
     return async_sessionmaker(get_engine(), expire_on_commit=False)
+
+
+@lru_cache
+def _platform_sessionmaker() -> async_sessionmaker[AsyncSession]:
+    return async_sessionmaker(get_platform_engine(), expire_on_commit=False)
+
+
+@asynccontextmanager
+async def platform_transaction() -> AsyncIterator[AsyncSession]:
+    """A console transaction, as aliquot_platform: tenant records, never staff or clinical."""
+    async with _platform_sessionmaker()() as session, session.begin():
+        yield session
 
 
 @asynccontextmanager

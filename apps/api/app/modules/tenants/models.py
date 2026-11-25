@@ -1,5 +1,4 @@
 from datetime import datetime
-from enum import StrEnum
 from typing import Any
 from uuid import UUID
 
@@ -8,13 +7,8 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.db import Base
-from app.core.enums import SECTION, Section, pg_enum
+from app.core.enums import SECTION, LabStatus, Section, pg_enum
 from app.core.ids import uuid7
-
-
-class LabStatus(StrEnum):
-    ACTIVE = "active"
-    SUSPENDED = "suspended"
 
 
 class Lab(Base):

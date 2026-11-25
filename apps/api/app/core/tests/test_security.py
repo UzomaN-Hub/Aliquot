@@ -55,7 +55,7 @@ def test_tampered_or_unsigned_tokens_are_rejected() -> None:
     assert decode_access_token(f"{header}.{payload}.{signature[::-1]}") is None
 
     unsigned = jwt.encode(
-        {"sub": str(CLAIMS.user_id), "lab": str(CLAIMS.lab_id)}, key=None, algorithm="none"
+        {"sub": str(CLAIMS.user_id), "lab": str(CLAIMS.lab_id)}, key="", algorithm="none"
     )
     assert decode_access_token(unsigned) is None
 

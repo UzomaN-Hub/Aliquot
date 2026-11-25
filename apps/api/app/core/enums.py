@@ -9,6 +9,11 @@ from enum import StrEnum
 from sqlalchemy import Enum
 
 
+class LabStatus(StrEnum):
+    ACTIVE = "active"
+    SUSPENDED = "suspended"
+
+
 class Section(StrEnum):
     CHEM_PATH = "chem_path"
     HAEMATOLOGY = "haematology"

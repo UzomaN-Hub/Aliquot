@@ -24,6 +24,7 @@ _ADMIN_URL = make_url(
 _TEST_DB = "aliquot_test"
 _OWNER_URL = _ADMIN_URL.set(database=_TEST_DB)
 _APP_URL = _OWNER_URL.set(username="aliquot_app", password="aliquot_app_dev")
+_PLATFORM_URL = _OWNER_URL.set(username="aliquot_platform", password="aliquot_platform_dev")
 
 os.environ.update(
     {
@@ -32,6 +33,10 @@ os.environ.update(
         "PLATFORM_DOMAIN": "localhost",
         "TENANT_MODE": "path",
         "DATABASE_URL": _APP_URL.render_as_string(hide_password=False),
+        "PLATFORM_DATABASE_URL": _PLATFORM_URL.render_as_string(hide_password=False),
+        "PUBLIC_WEB_URL": "http://localhost:3000",
+        # Test-only key; protects nothing real.
+        "TOTP_ENCRYPTION_KEY": "mb6PcIuROO_Su8c0V4l5kFex_g3-6AhGVXsnVWUOIMM=",
         "MIGRATION_DATABASE_URL": _OWNER_URL.render_as_string(hide_password=False),
         "JWT_SECRET": "test-secret-that-is-long-enough-0123456789",
     }
@@ -40,7 +45,10 @@ os.environ.update(
 from app.main import app  # noqa: E402  # must import after the settings above
 from app.scripts.dev_db import migrate, set_app_role_password  # noqa: E402
 
-_TABLES = "audit_log, sessions, user_sections, user_roles, users, lab_sections, labs"
+_TABLES = (
+    "audit_log, auth_tokens, sessions, user_sections, user_roles, users, lab_sections, labs, "
+    "platform_idempotency_keys, platform_sessions, platform_admins"
+)
 
 
 @pytest.fixture(scope="session")
@@ -55,6 +63,7 @@ def _database() -> Iterator[None]:
     owner = create_engine(_OWNER_URL)
     with owner.begin() as connection:
         set_app_role_password(connection, os.environ["DATABASE_URL"])
+        set_app_role_password(connection, os.environ["PLATFORM_DATABASE_URL"])
     owner.dispose()
     yield
 

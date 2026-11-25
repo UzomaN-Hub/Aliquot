@@ -26,7 +26,7 @@ class AuditEntry(Base):
 
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid7)
     at: Mapped[datetime] = mapped_column(primary_key=True, server_default=func.now())
-    lab_id: Mapped[UUID]
+    lab_id: Mapped[UUID | None]  # None only for platform events (decision 015)
     actor_type: Mapped[ActorType] = mapped_column(pg_enum(ActorType, "audit_actor"))
     actor_id: Mapped[UUID | None]
     action: Mapped[str]

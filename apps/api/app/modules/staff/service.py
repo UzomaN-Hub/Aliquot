@@ -11,6 +11,7 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.enums import Section
+from app.core.ids import uuid7
 from app.modules.staff import repository
 from app.modules.staff.models import Role, UserStatus
 
@@ -65,3 +66,25 @@ async def record_sign_in(
 
 def normalise_email(email: str) -> str:
     return email.strip().lower()
+
+
+async def create_first_manager(
+    session: AsyncSession, *, lab_id: UUID, full_name: str, email: str
+) -> UUID:
+    """A new lab's first Manager, status invited (no password until they set one).
+    Called by the console inside its platform transaction."""
+    user_id = uuid7()
+    await repository.insert_user(
+        session,
+        user_id=user_id,
+        lab_id=lab_id,
+        full_name=full_name.strip(),
+        email=normalise_email(email),
+        roles=[Role.MANAGER],
+    )
+    return user_id
+
+
+async def activate(session: AsyncSession, user_id: UUID, password_hash: str) -> None:
+    """Set the first password from an invite (or a new one from a reset) and activate."""
+    await repository.activate_with_password(session, user_id, password_hash)

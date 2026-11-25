@@ -27,7 +27,7 @@ from app.core.security import (
 from app.modules.audit import service as audit
 from app.modules.audit.models import ActorType
 from app.modules.auth import repository
-from app.modules.auth.models import AuthSession
+from app.modules.auth.models import AuthSession, AuthToken, TokenPurpose
 from app.modules.staff import service as staff
 from app.modules.staff.service import StaffAccount
 from app.modules.tenants import service as tenants
@@ -253,3 +253,100 @@ async def get_me(claims: AccessClaims) -> StaffAccount:
     if account is None or not account.is_active:
         raise session_ended()
     return account
+
+
+# ── Invite and reset links (FLOWS.md §1, §10) ─────────────────────────────
+INVITE_HOURS = 72
+MIN_PASSWORD_LENGTH = 12
+
+
+def link_invalid() -> AppError:
+    return AppError(
+        400,
+        "link_invalid",
+        "This link has expired or was already used. Ask your lab manager for a new one.",
+    )
+
+
+def link_url(lab_slug: str, token: str) -> str:
+    # The token rides in the #fragment: browsers never send it to any server, so it
+    # can't land in access logs, proxies or Referer headers. The page reads it locally.
+    return f"{get_settings().public_web_url}/l/{lab_slug}/set-password#token={token}"
+
+
+async def create_invite(
+    session: AsyncSession, *, lab_id: UUID, lab_slug: str, user_id: UUID
+) -> str:
+    """A single-use, 72-hour invite link. Called inside the caller's transaction."""
+    token, token_hash = new_refresh_token()  # 256 random bits, stored hashed
+    await repository.insert_token(
+        session,
+        lab_id=lab_id,
+        user_id=user_id,
+        purpose=TokenPurpose.INVITE,
+        token_hash=token_hash,
+        expires_at=datetime.now(UTC) + timedelta(hours=INVITE_HOURS),
+    )
+    return link_url(lab_slug, token)
+
+
+@dataclass(frozen=True)
+class LinkInfo:
+    purpose: TokenPurpose
+    full_name: str
+    email: str
+    lab_name: str
+
+
+async def _usable_token(session: AsyncSession, token: str) -> AuthToken:
+    row = await repository.get_token_by_hash(session, hash_token(token))
+    if row is None or row.used_at is not None or row.expires_at <= datetime.now(UTC):
+        raise link_invalid()
+    return row
+
+
+async def check_link(lab_slug: str, token: str) -> LinkInfo:
+    async with transaction() as session:
+        lab = await tenants.find_active_lab(session, lab_slug)
+        await set_current_lab(session, lab.id)
+        row = await _usable_token(session, token)
+        account = await staff.get_account(session, row.user_id)
+        if account is None:
+            raise link_invalid()
+        return LinkInfo(
+            purpose=row.purpose, full_name=account.full_name, email=account.email, lab_name=lab.name
+        )
+
+
+async def set_password(lab_slug: str, token: str, password: str, client: ClientInfo) -> None:
+    if len(password) < MIN_PASSWORD_LENGTH:
+        raise AppError(
+            422,
+            "password_too_short",
+            f"Use at least {MIN_PASSWORD_LENGTH} characters. A short sentence works well.",
+            "password",
+        )
+    async with transaction() as session:
+        lab = await tenants.find_active_lab(session, lab_slug)
+        await set_current_lab(session, lab.id)
+        row = await _usable_token(session, token)
+        account = await staff.get_account(session, row.user_id)
+        if account is None:
+            raise link_invalid()
+        if password.strip().lower() == account.email:
+            raise AppError(
+                422, "password_is_email", "Choose a password that isn't your email.", "password"
+            )
+        now = datetime.now(UTC)
+        await staff.activate(session, account.id, hash_password(password))
+        row.used_at = now
+        await audit.record(
+            session,
+            lab_id=lab.id,
+            actor_type=ActorType.USER,
+            actor_id=account.id,
+            action=f"auth.password_set.{row.purpose.value}",
+            entity="user",
+            entity_id=account.id,
+            ip=client.ip,
+        )
