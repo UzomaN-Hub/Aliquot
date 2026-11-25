@@ -31,6 +31,34 @@ STAFF: tuple[tuple[str, str, str, tuple[str, ...]], ...] = (
 )
 
 
+# A local-only super-admin for the console. 2FA is set up on first sign-in with any
+# authenticator app (Google Authenticator, Microsoft Authenticator, 1Password…).
+ADMIN_NAME = "Platform Admin"
+ADMIN_EMAIL = "admin@platform.example"
+ADMIN_PASSWORD = "platform-dev-2026"  # noqa: S105  # fictional, local-only seed data
+
+
+def seed_platform_admin(connection: Connection) -> bool:
+    exists = connection.execute(
+        text("SELECT 1 FROM platform_admins WHERE email = :email"), {"email": ADMIN_EMAIL}
+    ).first()
+    if exists:
+        return False
+    connection.execute(
+        text(
+            "INSERT INTO platform_admins (id, email, full_name, password_hash) "
+            "VALUES (:id, :email, :name, :hash)"
+        ),
+        {
+            "id": uuid7(),
+            "email": ADMIN_EMAIL,
+            "name": ADMIN_NAME,
+            "hash": hash_password(ADMIN_PASSWORD),
+        },
+    )
+    return True
+
+
 def migrate() -> None:
     command.upgrade(Config("alembic.ini"), "head")
 
@@ -112,10 +140,14 @@ def main() -> None:
     engine = create_engine(settings.migration_database_url)
     with engine.begin() as connection:
         set_app_role_password(connection, settings.database_url)
+        set_app_role_password(connection, settings.platform_database_url)
         created = seed_working_lab(connection)
+        admin_created = seed_platform_admin(connection)
     engine.dispose()
 
-    print("Database migrated; app role password set.")
+    print("Database migrated; app and platform role passwords set.")
+    if admin_created:
+        print(f"Console: /console/sign-in as {ADMIN_EMAIL} (password: {ADMIN_PASSWORD}).")
     if created:
         print(f"{LAB_NAME} created at /l/{LAB_SLUG}. Staff (password: {STAFF_PASSWORD}):")
         for full_name, email, role, sections in STAFF:

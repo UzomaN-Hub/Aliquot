@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from app.modules.tenants.models import LabStatus
+from app.core.enums import LabStatus
 
 
 class LabBrandingResponse(BaseModel):

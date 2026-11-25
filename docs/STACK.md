@@ -51,6 +51,7 @@
 | SQLAlchemy 2 (async) + Alembic | ORM and migrations |
 | psycopg 3 | Postgres driver, async for the API and sync for migrations and the worker (decision 011) |
 | PyJWT | Signs and checks access tokens (decision 013) |
+| pyotp + cryptography + segno | Console 2FA: TOTP codes, Fernet encryption of the secret at rest, QR code as SVG (decision 015) |
 | Pydantic v2 | Request/response validation |
 | Custom JWT auth (access + refresh) + RBAC | Login, roles, tenant scoping |
 | Argon2 (argon2-cffi) + SlowAPI | Password hashing, rate limiting |

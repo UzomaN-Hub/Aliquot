@@ -4,6 +4,7 @@ from app.core.config import get_settings
 from app.core.errors import install_error_handlers
 from app.modules.auth.router import router as auth_router
 from app.modules.health.router import router as health_router
+from app.modules.platform.router import router as platform_router
 from app.modules.tenants.router import router as tenants_router
 
 
@@ -15,6 +16,7 @@ def create_app() -> FastAPI:
     app.include_router(health_router)
     app.include_router(tenants_router)
     app.include_router(auth_router)
+    app.include_router(platform_router)
     return app
 
 

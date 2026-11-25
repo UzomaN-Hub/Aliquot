@@ -99,6 +99,9 @@ jobs:
       PLATFORM_DOMAIN: localhost
       TENANT_MODE: path
       DATABASE_URL: postgresql+psycopg://aliquot_app:aliquot_app_dev@127.0.0.1:5432/aliquot
+      PLATFORM_DATABASE_URL: postgresql+psycopg://aliquot_platform:aliquot_platform_dev@127.0.0.1:5432/aliquot
+      PUBLIC_WEB_URL: http://localhost:3000
+      TOTP_ENCRYPTION_KEY: mb6PcIuROO_Su8c0V4l5kFex_g3-6AhGVXsnVWUOIMM= # CI-only, protects nothing
       MIGRATION_DATABASE_URL: postgresql+psycopg://aliquot:aliquot_dev@127.0.0.1:5432/aliquot
       JWT_SECRET: ci-only-secret-that-is-at-least-32-characters
       # pytest builds its own database (aliquot_test) through this admin connection.

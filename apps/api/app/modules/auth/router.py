@@ -8,7 +8,10 @@ from app.modules.auth.dependencies import CurrentUser, client_info, require_csrf
 from app.modules.auth.schemas import (
     LabRequest,
     LabResponse,
+    LinkRequest,
+    LinkResponse,
     SessionResponse,
+    SetPasswordRequest,
     SignInRequest,
     UserResponse,
 )
@@ -111,3 +114,24 @@ async def sign_out(
 @router.get("/me", summary="The signed-in user")
 async def me(claims: CurrentUser) -> UserResponse:
     return _user(await service.get_me(claims))
+
+
+@router.post("/link", summary="Who an invite or reset link is for")
+async def check_link(body: LinkRequest) -> LinkResponse:
+    """Lets the set-password page greet the person by name before they choose a password."""
+    info = await service.check_link(body.lab, body.token)
+    return LinkResponse(
+        purpose=info.purpose.value,
+        full_name=info.full_name,
+        email=info.email,
+        lab_name=info.lab_name,
+    )
+
+
+@router.post(
+    "/set-password",
+    summary="Choose a password from an invite or reset link",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def set_password(body: SetPasswordRequest, request: Request) -> None:
+    await service.set_password(body.lab, body.token, body.password, client_info(request))

@@ -41,3 +41,21 @@ class SessionResponse(BaseModel):
     expires_in: int = Field(description="Seconds until the access token expires.")
     user: UserResponse
     lab: LabResponse
+
+
+class LinkRequest(BaseModel):
+    """Invite or reset link. The token is sent in the body, never in a URL."""
+
+    lab: str = LabSlug
+    token: str = Field(min_length=20, max_length=200)
+
+
+class LinkResponse(BaseModel):
+    purpose: Literal["invite", "reset"]
+    full_name: str
+    email: str
+    lab_name: str
+
+
+class SetPasswordRequest(LinkRequest):
+    password: str = Field(min_length=1, max_length=1024)
