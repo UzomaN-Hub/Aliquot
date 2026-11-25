@@ -7,7 +7,7 @@ is missing (CONVENTIONS.md §8). Never hard-code the platform name or domain.
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import SecretStr, field_validator
+from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 _DRIVER = "postgresql+psycopg://"
@@ -32,6 +32,10 @@ class Settings(BaseSettings):
     access_token_minutes: int = 15
     refresh_token_days: int = 7
     session_idle_hours: int = 8
+
+    # Set by Render on every deploy; /health reports it so the deploy workflow can
+    # tell when the new version is live. The repo is public, so this reveals nothing.
+    git_commit: str | None = Field(default=None, validation_alias="RENDER_GIT_COMMIT")
 
     @field_validator("database_url", "migration_database_url")
     @classmethod

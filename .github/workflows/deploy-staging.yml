@@ -1,0 +1,125 @@
+# Deploy staging: after CI passes on main, migrate Supabase, then deploy the API
+# on Render, then prove the new version is live and reaches the database.
+# Replaces Render's auto-deploy (decision 007). Explained in docs/learning/ci-cd.md.
+# The web app still deploys through Vercel's Git integration.
+name: Deploy staging
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch: # "Run workflow" button: migrate and deploy the current main
+
+permissions:
+  contents: read
+
+# One deploy at a time. A newer merge waits; a migration is never cancelled halfway.
+concurrency:
+  group: deploy-staging
+  cancel-in-progress: false
+
+env:
+  API_URL: https://aliquot-api.onrender.com
+
+jobs:
+  # Only CI that passed, and only when the API (or this file) changed.
+  changes:
+    name: Detect API changes
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      api: ${{ steps.filter.outputs.api }}
+      sha: ${{ steps.filter.outputs.sha }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # The exact commit CI tested, not whatever main is by now.
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          fetch-depth: 2
+          persist-credentials: false
+
+      - name: Did the API change in this merge?
+        id: filter
+        env:
+          EVENT: ${{ github.event_name }}
+        run: |
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          if [ "$EVENT" = "workflow_dispatch" ]; then
+            echo "api=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          # Squash merges: one commit per PR, so HEAD~1..HEAD is the whole PR.
+          if git diff --name-only HEAD~1 HEAD | grep -qE '^(apps/api/|\.github/workflows/deploy-staging\.yml$)'; then
+            echo "api=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "api=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  # Migrations run BEFORE the new code starts, so new code never meets an old schema.
+  migrate:
+    name: Migrate staging database
+    needs: changes
+    if: needs.changes.outputs.api == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment: staging
+    defaults:
+      run:
+        working-directory: apps/api
+    env:
+      MIGRATION_DATABASE_URL: ${{ secrets.STAGING_MIGRATION_DATABASE_URL }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.changes.outputs.sha }}
+          persist-credentials: false
+
+      - name: Install uv (with download cache)
+        uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
+        with:
+          version: "0.13.9"
+          enable-cache: true
+          cache-dependency-glob: apps/api/uv.lock
+          cache-python: true
+
+      - name: Install runtime dependencies only
+        run: uv sync --locked --no-dev
+
+      - name: Apply migrations (alembic upgrade head)
+        run: uv run alembic upgrade head
+
+  deploy-api:
+    name: Deploy API to Render
+    needs: [changes, migrate]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    environment: staging
+    steps:
+      - name: Trigger the deploy hook for this exact commit
+        env:
+          HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+          SHA: ${{ needs.changes.outputs.sha }}
+        run: curl --fail --silent --show-error --output /dev/null -X POST "${HOOK}&ref=${SHA}"
+
+      # Render's free tier builds and starts in a few minutes. Wait until /health
+      # reports this commit, so we never "pass" against the old version.
+      - name: Wait for the new version
+        env:
+          SHA: ${{ needs.changes.outputs.sha }}
+        run: |
+          for attempt in $(seq 1 60); do
+            commit=$(curl --silent --max-time 10 "$API_URL/health" | jq -r '.commit // empty' || true)
+            if [ "$commit" = "$SHA" ]; then echo "Live: $commit"; exit 0; fi
+            echo "Attempt $attempt: running '${commit:-unknown}', waiting for $SHA"
+            sleep 15
+          done
+          echo "The new version did not go live within 15 minutes."; exit 1
+
+      # A lab that doesn't exist must come back as a clean 404 from the database
+      # lookup. A 500 here means the API can't reach Postgres.
+      - name: Smoke test (database reachable)
+        run: |
+          body=$(curl --silent --max-time 15 "$API_URL/v1/labs/smoke-test-missing/branding")
+          echo "$body"
+          test "$(echo "$body" | jq -r .code)" = "lab_not_found"
