@@ -121,12 +121,18 @@ def decrypt_secret(secret_enc: str) -> str | None:
 
 
 def totp_provisioning(secret: str, email: str) -> tuple[str, str]:
-    """(otpauth:// link for authenticator apps, QR code as an SVG string)."""
+    """(otpauth:// link for authenticator apps, QR code as an image data URI).
+
+    A complete SVG with its namespace, so browsers can show it in an <img>; inline
+    SVG (without xmlns) renders nothing there.
+    """
     uri = pyotp.TOTP(secret).provisioning_uri(
         name=email, issuer_name=f"{get_settings().platform_name} console"
     )
-    svg = segno.make(uri, error="m").svg_inline(scale=5, border=2, dark="#1f1e1c", light="#fbf9f4")
-    return uri, svg
+    image = segno.make(uri, error="m").svg_data_uri(
+        scale=5, border=2, dark="#1f1e1c", light="#fbf9f4"
+    )
+    return uri, image
 
 
 def verify_totp(

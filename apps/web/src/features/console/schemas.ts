@@ -5,7 +5,12 @@ export const signInStepSchema = z.object({
   step: z.enum(["verify", "setup"]),
   challenge: z.string(),
   setup: z
-    .object({ secret: z.string(), otpauth_uri: z.string(), qr_svg: z.string() })
+    .object({
+      secret: z.string(),
+      otpauth_uri: z.string(),
+      // Only our own SVG data URI is accepted as an image source.
+      qr_image: z.string().startsWith("data:image/svg+xml"),
+    })
     .nullable()
     .optional(),
 });

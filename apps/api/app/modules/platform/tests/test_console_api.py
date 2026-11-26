@@ -1,6 +1,7 @@
 """Platform console: 2FA sign-in, lab management, isolation from lab data (decision 015)."""
 
 from typing import Any
+from urllib.parse import unquote
 
 import pyotp
 import pytest
@@ -49,7 +50,9 @@ def test_first_sign_in_sets_up_2fa_then_opens_the_console(
     step = _sign_in(client)
     assert step["step"] == "setup"
     assert step["setup"]["otpauth_uri"].startswith("otpauth://totp/")
-    assert step["setup"]["qr_svg"].startswith("<svg")
+    qr = step["setup"]["qr_image"]
+    assert qr.startswith("data:image/svg+xml")
+    assert "xmlns" in unquote(qr)  # without the namespace, browsers show nothing
 
     code = pyotp.TOTP(step["setup"]["secret"]).now()
     response = client.post(

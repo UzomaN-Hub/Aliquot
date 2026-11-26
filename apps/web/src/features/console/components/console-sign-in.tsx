@@ -146,10 +146,10 @@ function CodeStep({ step, onRestart }: { step: SignInStep; onRestart: () => void
 
       {setup && (
         <div className="mb-8 flex flex-col items-start gap-4">
-          {/* The QR is SVG markup from our own API; shown as an image, never injected. */}
+          {/* Our API's QR as an SVG data URI (checked by the schema); an image, never injected. */}
           {/* eslint-disable-next-line @next/next/no-img-element -- inline data: SVG, nothing for next/image to optimise */}
           <img
-            src={`data:image/svg+xml;utf8,${encodeURIComponent(setup.qr_svg)}`}
+            src={setup.qr_image}
             alt="QR code to add the console to your authenticator app"
             width={196}
             height={196}
