@@ -68,7 +68,11 @@ describe("ConsoleSignIn", () => {
       json(200, {
         step: "setup",
         challenge: "c".repeat(40),
-        setup: { secret: "ABCDEFGHIJKLMNOP", otpauth_uri: "otpauth://totp/x", qr_svg: "<svg/>" },
+        setup: {
+          secret: "ABCDEFGHIJKLMNOP",
+          otpauth_uri: "otpauth://totp/x",
+          qr_image: "data:image/svg+xml;charset=utf-8,%3Csvg%2F%3E",
+        },
       }),
     );
     render(<ConsoleSignIn />);

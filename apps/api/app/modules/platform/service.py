@@ -95,11 +95,11 @@ async def sign_in(email: str, password: str, client: ClientInfo) -> SignInStepRe
             if admin.totp_secret_enc is None:
                 # First sign-in: 2FA is set up before the console opens (ARCHITECTURE §9).
                 secret = new_totp_secret()
-                uri, svg = totp_provisioning(secret, admin.email)
+                uri, image = totp_provisioning(secret, admin.email)
                 result = SignInStepResponse(
                     step="setup",
                     challenge=create_mfa_challenge(admin.id, encrypt_secret(secret)),
-                    setup=TotpSetup(secret=secret, otpauth_uri=uri, qr_svg=svg),
+                    setup=TotpSetup(secret=secret, otpauth_uri=uri, qr_image=image),
                 )
             else:
                 result = SignInStepResponse(step="verify", challenge=create_mfa_challenge(admin.id))

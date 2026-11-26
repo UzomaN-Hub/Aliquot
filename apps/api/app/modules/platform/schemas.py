@@ -17,7 +17,7 @@ class PlatformSignInRequest(BaseModel):
 class TotpSetup(BaseModel):
     secret: str = Field(description="For typing into an authenticator app by hand.")
     otpauth_uri: str
-    qr_svg: str = Field(description="QR code of otpauth_uri, as SVG markup.")
+    qr_image: str = Field(description="QR code of otpauth_uri, as an SVG data: URI for <img>.")
 
 
 class SignInStepResponse(BaseModel):
