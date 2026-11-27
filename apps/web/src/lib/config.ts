@@ -11,6 +11,8 @@ const schema = z.object({
   TENANT_MODE: z.enum(["path", "subdomain"]),
   /** Where the same-origin proxy sends /api/v1/* (decision 003). No trailing slash. */
   API_URL: z.url().transform((url) => url.replace(/\/+$/, "")),
+  /** Optional. Where "Book a demo" writes to; without it the landing says bookings open soon. */
+  CONTACT_EMAIL: z.email().optional(),
   /** /styleguide is always on in `next dev`; elsewhere only when "true" (review on staging). */
   STYLEGUIDE_ENABLED: z
     .enum(["true", "false"])

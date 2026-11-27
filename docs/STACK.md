@@ -42,6 +42,8 @@
 | nuqs | Shareable view state in the URL (search, filters, sort, cursor, tab) |
 | @tanstack/react-virtual | Virtualised long lists (only visible rows in the DOM) |
 | @zxing/browser | Barcode scanning with phone/laptop camera |
+| GSAP (+ ScrollTrigger, SplitText) + Lenis | Landing page motion only, loaded after first paint (decision 017) |
+| @playwright/test | Browser tests in Chromium, Firefox and WebKit (decision 016) |
 
 ## 3. Backend
 
