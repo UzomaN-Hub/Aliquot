@@ -1,27 +1,32 @@
 import { HoverAccordion, type AccordionItem } from "./hover-accordion";
 import { SectionHeading } from "./section-heading";
+import { Switcher, type SwitcherItem } from "./switcher";
 
 // ROLES.md, in plain words.
-const ROLES: AccordionItem[] = [
+const ROLES: SwitcherItem[] = [
   {
-    title: "Manager",
-    body: "Runs the lab's setup: staff and their sections, the test catalogue and prices, reference ranges and critical limits, branding and reports.",
-    meta: "Sees every section · two-step sign-in",
+    name: "Managers",
+    title: "Your lab, set up your way.",
+    body: "Staff and their sections, the test catalogue and prices, reference ranges and critical limits, branding and reports.",
+    points: ["Sees every section", "Daily report at 07:00", "Two-step sign-in"],
   },
   {
-    title: "Chief Scientist",
-    body: "Verifies and releases results for their sections, amends a released result with a reason, and acknowledges critical alerts.",
-    meta: "Their sections · two-step sign-in",
+    name: "Chief Scientists",
+    title: "Nothing leaves without you.",
+    body: "Verify and release results for your sections, amend a released result with a reason, acknowledge critical alerts.",
+    points: ["Verification queue, STAT first", "Amendments keep every version", "Two-step sign-in"],
   },
   {
-    title: "Lab Scientist",
-    body: "Receives or rejects samples and enters results on a keyboard-first grid. Never releases: a second pair of eyes always does.",
-    meta: "Their sections",
+    name: "Lab Scientists",
+    title: "Fast at the bench.",
+    body: "Receive or reject samples and enter results on a keyboard-first grid with live flags. A second pair of eyes always releases.",
+    points: ["Live worklist for your sections", "Flags as you type", "Calculated values filled in"],
   },
   {
-    title: "Front Desk",
-    body: "Registers patients, creates requests, confirms payment and prints barcode labels. Sees where a sample is, not its results.",
-    meta: "Status only",
+    name: "Front Desk",
+    title: "Registration in a minute.",
+    body: "Register patients, create requests, confirm payment and print barcode labels. See where a sample is, never its results.",
+    points: ["Duplicate patient warnings", "One label per container", "Status at a glance"],
   },
 ];
 
@@ -58,16 +63,18 @@ export function People() {
     <section
       id="people"
       aria-labelledby="people-title"
-      className="scroll-mt-24 px-6 py-28 sm:px-10 lg:py-40"
+      className="scroll-mt-28 px-6 py-28 sm:px-12 lg:py-40"
     >
-      <div className="mx-auto grid max-w-[1440px] gap-16 lg:grid-cols-[0.8fr_1.2fr] lg:gap-24">
+      <div className="mx-auto flex max-w-[1520px] flex-col gap-20">
         <SectionHeading
           id="people-title"
-          index="06"
-          title="Everyone sees their part."
-          intro="Four roles, each with exactly the screens and permissions its work needs. Releasing a result always takes a Chief Scientist."
+          index="07"
+          label="Roles"
+          tagline="One lab, every perspective"
+          title="Different roles."
+          accent="One shared record."
         />
-        <HoverAccordion items={ROLES} />
+        <Switcher items={ROLES} label="Roles in a lab" />
       </div>
     </section>
   );
@@ -78,10 +85,17 @@ export function Questions() {
     <section
       id="questions"
       aria-labelledby="questions-title"
-      className="scroll-mt-24 px-6 py-28 sm:px-10 lg:py-40"
+      className="scroll-mt-28 px-6 py-28 sm:px-12 lg:py-40"
     >
-      <div className="mx-auto grid max-w-[1440px] gap-16 lg:grid-cols-[0.8fr_1.2fr] lg:gap-24">
-        <SectionHeading id="questions-title" index="07" title="Questions labs ask." />
+      <div className="mx-auto grid max-w-[1520px] gap-16 lg:grid-cols-[0.85fr_1.15fr] lg:gap-24">
+        <SectionHeading
+          id="questions-title"
+          index="09"
+          label="Questions"
+          tagline="The details matter"
+          title="Questions"
+          accent="labs ask."
+        />
         <HoverAccordion items={QUESTIONS} initial={0} />
       </div>
     </section>

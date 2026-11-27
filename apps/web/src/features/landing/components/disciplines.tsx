@@ -1,61 +1,68 @@
 import { SectionHeading } from "./section-heading";
+import { Switcher, type SwitcherItem } from "./switcher";
 
-const DISCIPLINES = [
+const DISCIPLINES: SwitcherItem[] = [
   {
-    name: "Chemical Pathology",
-    text: "Numeric results with units, ranges by sex and age, and critical limits. eGFR (CKD-EPI 2021), Friedewald LDL and anion gap are calculated for you.",
-    panels: "E/U/Cr · LFT · Lipid profile · FBS",
+    name: "Chem Path",
+    title: "Numbers you can trust at a glance.",
+    body: "Numeric results with units, reference ranges by sex and age, and critical limits that flag themselves as they're typed.",
+    points: [
+      "E/U/Cr, LFT, lipid profile, FBS and your own panels",
+      "eGFR (CKD-EPI 2021), Friedewald LDL, anion gap calculated",
+      "H, L, CH, CL flags, never colour alone",
+    ],
   },
   {
     name: "Haematology",
-    text: "Every FBC parameter and a differential count, structured blood film comments, ESR, blood group and genotype.",
-    panels: "FBC · Differential · ESR · Group & genotype",
+    title: "The whole count, not just the numbers.",
+    body: "Every FBC parameter from the analyser printout and a differential count, with structured blood film comments.",
+    points: [
+      "Full blood count and differential",
+      "Blood film comments, structured and free text",
+      "ESR, blood group and Hb genotype",
+    ],
   },
   {
-    name: "Medical Microbiology",
-    text: "Work that spans days: microscopy, culture, identification and sensitivities. A preliminary report goes out early; the final one locks.",
-    panels: "Gram stain · Culture · ID · S / I / R",
+    name: "Microbiology",
+    title: "Work that spans days, kept in step.",
+    body: "Microscopy, culture, identification and sensitivities, stage by stage. A preliminary report goes out early; the final one locks.",
+    points: [
+      "Gram stain and microscopy findings",
+      "Organisms and antibiotic panels your lab configures",
+      "S / I / R sensitivities, preliminary and final reports",
+    ],
   },
-] as const;
+];
 
 /**
- * The dark section (graphite whatever the page theme). As it scrolls in, its rounded,
- * inset frame opens to the full width; as it leaves, it closes again (start-motion.ts).
+ * The dark section (graphite in either mode). It fills the screen when you arrive;
+ * its corners round and it pulls in only as you leave (start-motion.ts morph).
  */
 export function Disciplines() {
   return (
-    <section id="disciplines" aria-labelledby="disciplines-title" className="scroll-mt-24 py-6">
+    <section id="disciplines" aria-labelledby="disciplines-title" className="scroll-mt-28">
       <div
         data-morph
-        data-theme="dark"
-        className="overflow-hidden bg-surface px-6 py-28 text-ink sm:px-10 lg:py-40"
+        data-tone="dark"
+        className="relative overflow-hidden bg-surface px-6 py-28 text-ink sm:px-12 lg:py-40"
       >
-        <div className="mx-auto flex max-w-[1440px] flex-col gap-20">
+        <p
+          aria-hidden="true"
+          className="text-outline pointer-events-none absolute right-[-2vw] bottom-[-4vw] font-serif text-[clamp(10rem,6rem+16vw,26rem)] leading-none tracking-headline select-none"
+        >
+          03
+        </p>
+        <div className="relative mx-auto flex max-w-[1520px] flex-col gap-20">
           <SectionHeading
             id="disciplines-title"
             index="03"
-            title="Three disciplines. One way of working."
+            label="The sections"
+            tagline="Chem path / Haem / Micro"
+            title="Three disciplines."
+            accent="One way of working."
             intro="Each section keeps its own worklist, its own verifiers and its own rules, inside the same calm system."
           />
-          <ul className="grid gap-px overflow-hidden rounded-panel bg-hairline lg:grid-cols-3">
-            {DISCIPLINES.map((discipline) => (
-              <li
-                key={discipline.name}
-                data-reveal="fade"
-                className="group flex min-h-80 flex-col justify-between gap-12 bg-surface p-8 transition-colors duration-500 hover:bg-primary hover:text-on-primary sm:p-10"
-              >
-                <h3 className="font-serif text-display tracking-headline">{discipline.name}</h3>
-                <div className="flex flex-col gap-6">
-                  <p className="text-body-lg text-ink-secondary transition-colors duration-500 group-hover:text-on-primary">
-                    {discipline.text}
-                  </p>
-                  <p className="font-mono text-body text-ink-muted transition-colors duration-500 group-hover:text-on-primary">
-                    {discipline.panels}
-                  </p>
-                </div>
-              </li>
-            ))}
-          </ul>
+          <Switcher items={DISCIPLINES} label="Lab sections" />
         </div>
       </div>
     </section>

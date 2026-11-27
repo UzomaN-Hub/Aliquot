@@ -19,6 +19,7 @@ const twMerge = extendTailwindMerge({
         "hero-sm",
         "hero",
         "headline",
+        "lead",
         "mega",
       ],
       radius: ["control", "panel", "hero"],

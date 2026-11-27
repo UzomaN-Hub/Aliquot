@@ -5,8 +5,10 @@ const SECTIONS = [
   "journey",
   "disciplines",
   "critical",
+  "delivery",
   "safety",
   "people",
+  "next",
   "questions",
   "contact",
 ];
@@ -100,10 +102,33 @@ test.describe("landing: phone", () => {
     );
     expect(overflow).toBeLessThanOrEqual(0);
 
-    const role = page.getByRole("button", { name: /Lab Scientist/ });
+    const role = page.getByRole("tab", { name: /Lab Scientists/ });
     await role.scrollIntoViewIfNeeded();
     await role.tap();
-    await expect(role).toHaveAttribute("aria-expanded", "true");
+    await expect(role).toHaveAttribute("aria-selected", "true");
     expect(errors).toEqual([]);
+  });
+});
+
+test.describe("landing: coming soon and section bar", () => {
+  test("Book a demo opens a Coming soon dialog over a blurred page", async ({ page }) => {
+    await page.goto("/");
+    await page
+      .getByRole("link", { name: /Book a demo/ })
+      .first()
+      .click();
+    const dialog = page.getByRole("dialog", { name: /Demo bookings: coming soon/ });
+    await expect(dialog).toBeVisible();
+    await dialog.getByRole("button", { name: "Got it" }).click();
+    await expect(dialog).toBeHidden();
+  });
+
+  test("the section bar follows the scroll", async ({ page }) => {
+    await page.goto("/#safety");
+    const bar = page.getByRole("navigation", { name: "Sections" });
+    await expect(bar.getByRole("link", { name: /Safety/ })).toHaveAttribute(
+      "aria-current",
+      "location",
+    );
   });
 });

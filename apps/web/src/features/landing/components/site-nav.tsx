@@ -2,22 +2,32 @@
 
 import { useEffect, useState } from "react";
 
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
+
+import { CtaPill } from "./cta-pill";
 
 const LINKS = [
   { href: "#journey", label: "How it works" },
   { href: "#disciplines", label: "Sections" },
+  { href: "#critical", label: "Critical alerts" },
   { href: "#safety", label: "Safety" },
   { href: "#questions", label: "Questions" },
 ] as const;
 
 /**
- * Landing navigation: transparent over the hero, a quiet Bone (or graphite) band
- * once the page scrolls. Links collapse into the page on phones; the one action stays.
+ * Landing navigation. A container (data-surface), so in dark mode it turns graphite
+ * while the page stays Bone (decision 018). Phones get a round menu button that
+ * opens the links full screen.
  */
-export function SiteNav({ name, demoHref }: { name: string; demoHref: string }) {
+export function SiteNav({
+  name,
+  demoProps,
+}: {
+  name: string;
+  demoProps: React.ComponentProps<"a">;
+}) {
   const [scrolled, setScrolled] = useState(false);
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -26,40 +36,99 @@ export function SiteNav({ name, demoHref }: { name: string; demoHref: string }) 
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  useEffect(() => {
+    document.documentElement.style.overflow = open ? "hidden" : "";
+    const onKey = (event: KeyboardEvent) => event.key === "Escape" && setOpen(false);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
+
   return (
     <header
+      data-surface
       className={cn(
-        "fixed inset-x-0 top-0 z-40 transition-colors duration-300",
-        scrolled
-          ? "border-b border-hairline bg-surface/85 backdrop-blur-md"
-          : "border-b border-transparent",
+        "fixed inset-x-0 top-0 z-40 bg-surface/90 text-ink backdrop-blur-md transition-[border-color] duration-300",
+        scrolled ? "border-b border-hairline" : "border-b border-transparent",
       )}
     >
       <nav
         aria-label="Main"
-        className="mx-auto flex h-18 max-w-[1440px] items-center gap-10 px-6 sm:px-10"
+        className="mx-auto flex h-22 max-w-[1520px] items-center gap-12 px-6 sm:px-12"
       >
-        <a href="#top" className="font-serif text-[28px] leading-none tracking-headline">
+        <a
+          href="#top"
+          className="font-serif text-[clamp(2rem,1.6rem+1vw,2.6rem)] leading-none tracking-headline"
+        >
           {name}
+          <span className="text-eosin">.</span>
         </a>
-        <ul className="hidden items-center gap-8 lg:flex">
+        <ul className="hidden items-center gap-9 xl:flex">
           {LINKS.map((link) => (
             <li key={link.href}>
               <a
                 href={link.href}
-                className="text-body text-ink-secondary transition-colors hover:text-ink"
+                className="text-[17px] text-ink-secondary transition-colors hover:text-ink"
               >
                 {link.label}
               </a>
             </li>
           ))}
         </ul>
-        <div className="ml-auto">
-          <Button variant="marketing" asChild className="h-10 px-5 text-body">
-            <a href={demoHref}>Book a demo</a>
-          </Button>
+        <div className="ml-auto flex items-center gap-4">
+          <CtaPill size="md" className="hidden sm:inline-flex" {...demoProps}>
+            Book a demo
+          </CtaPill>
+          <button
+            type="button"
+            aria-expanded={open}
+            aria-controls="mobile-menu"
+            aria-label={open ? "Close menu" : "Open menu"}
+            onClick={() => setOpen(!open)}
+            className="grid size-13 cursor-pointer place-items-center rounded-full border border-ink/40 xl:hidden"
+          >
+            <span aria-hidden="true" className="flex w-5 flex-col gap-1.5">
+              <span
+                className={cn(
+                  "h-0.5 bg-ink transition-transform",
+                  open && "translate-y-2 rotate-45",
+                )}
+              />
+              <span className={cn("h-0.5 bg-ink transition-opacity", open && "opacity-0")} />
+              <span
+                className={cn(
+                  "h-0.5 bg-ink transition-transform",
+                  open && "-translate-y-2 -rotate-45",
+                )}
+              />
+            </span>
+          </button>
         </div>
       </nav>
+
+      {open && (
+        <div
+          id="mobile-menu"
+          className="h-[calc(100dvh-5.5rem)] overflow-y-auto border-t border-hairline px-6 pb-10 sm:px-12 xl:hidden"
+        >
+          <ul className="flex flex-col">
+            {LINKS.map((link, i) => (
+              <li key={link.href} className="border-b border-hairline">
+                <a
+                  href={link.href}
+                  onClick={() => setOpen(false)}
+                  className="flex items-baseline gap-5 py-5 font-serif text-[clamp(2rem,1.6rem+2vw,3rem)] tracking-headline"
+                >
+                  <span className="font-mono text-body text-primary">0{i + 1}</span>
+                  {link.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+          <div className="mt-10" onClick={() => setOpen(false)}>
+            <CtaPill {...demoProps}>Book a demo</CtaPill>
+          </div>
+        </div>
+      )}
     </header>
   );
 }

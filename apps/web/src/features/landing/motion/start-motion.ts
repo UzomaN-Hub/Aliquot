@@ -1,30 +1,37 @@
 /**
- * Every landing animation, in one place (decision 017). Loaded on demand by
+ * Every landing animation, in one place (decisions 017, 018). Loaded on demand by
  * landing-motion.tsx, only when motion is on.
  *
- * Rules that keep it smooth on a mid-range phone:
+ * - Entrances REPLAY each time a section comes back into view (enter from above or
+ *   below), like the reference; they don't play once and freeze.
  * - Only transform, opacity, clip-path and SVG strokes move; never layout.
- * - Text is split once (SplitText re-splits only on resize or font load).
- * - Looping work pauses when off screen; nothing runs after "Pause motion".
+ * - Looping work pauses off screen; "Pause motion" reverts everything.
  */
 import { gsap } from "gsap";
+import { ScrambleTextPlugin } from "gsap/ScrambleTextPlugin";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SplitText } from "gsap/SplitText";
 import Lenis from "lenis";
 
-gsap.registerPlugin(ScrollTrigger, SplitText);
+gsap.registerPlugin(ScrollTrigger, SplitText, ScrambleTextPlugin);
 
 type Cleanup = () => void;
 const all = <T extends Element = HTMLElement>(selector: string, root: ParentNode = document) =>
   Array.from(root.querySelectorAll<T>(selector));
 
+/** Play on arrival from either direction, every time. */
+const replay = (trigger: Element, start = "top 85%"): ScrollTrigger.Vars => ({
+  trigger,
+  start,
+  toggleActions: "restart none restart none",
+});
+
 export function startMotion(): Cleanup {
   const root = document.documentElement;
 
-  // Smooth, weighted scrolling with a mouse or trackpad. Touch keeps the phone's own
-  // native scrolling, which people's thumbs already trust.
+  // Smooth, weighted scrolling for mouse and trackpad; touch keeps native scrolling.
   const lenis = window.matchMedia("(pointer: fine)").matches
-    ? new Lenis({ lerp: 0.11, autoRaf: false, anchors: { offset: -88 } })
+    ? new Lenis({ lerp: 0.1, autoRaf: false, anchors: { offset: -96 } })
     : null;
   const tick = (time: number) => lenis?.raf(time * 1000);
   if (lenis) {
@@ -35,13 +42,34 @@ export function startMotion(): Cleanup {
 
   const cleanups: Cleanup[] = [];
   const ctx = gsap.context(() => {
-    cleanups.push(heroFigure(), chars(), lines(), fades(), counters(), morph(), critical());
+    cleanups.push(
+      heroFigure(),
+      drops(),
+      scramble(),
+      lines(),
+      fades(),
+      counters(),
+      morph(),
+      critical(),
+      delivery(),
+    );
   });
   const media = gsap.matchMedia();
   media.add("(min-width: 1024px)", journeyPin);
 
   root.classList.add("motion-ready");
+  // Triggers were created by kind, not page order; the pinned journey adds scroll
+  // space above later sections, so sort top-to-bottom before measuring.
+  ScrollTrigger.sort();
   ScrollTrigger.refresh();
+
+  // A deep link (/#safety) was scrolled to before the pin added its space above.
+  // Chrome and Firefox keep the place (scroll anchoring); Safari doesn't, so go
+  // back to the linked section now that the page has its final height.
+  const linked = window.location.hash
+    ? document.getElementById(window.location.hash.slice(1))
+    : null;
+  if (linked) linked.scrollIntoView({ block: "start" });
 
   return () => {
     media.revert();
@@ -74,40 +102,40 @@ function heroFigure(): Cleanup {
         { opacity: 1, x: 0, y: 0 },
         {
           keyframes: [
-            { x: dx * 0.35, y: 26, duration: 0.22, ease: "power1.in" },
-            { x: dx, y: 62, duration: 0.3, ease: "power2.in" },
-            { opacity: 0, duration: 0.12 },
+            { x: dx * 0.35, y: 26, duration: 0.2, ease: "power1.in" },
+            { x: dx, y: 62, duration: 0.26, ease: "power2.in" },
+            { opacity: 0, duration: 0.1 },
           ],
         },
-        i * 0.07,
+        i * 0.06,
       );
     });
     return tl;
   };
 
   gsap.set(wrapper, { opacity: 1 });
-  const intro = gsap.timeline({ delay: 0.4, defaults: { ease: "power3.out" } });
+  const intro = gsap.timeline({ delay: 0.3, defaults: { ease: "power3.out" } });
   intro
-    .from(part("cap"), { y: -24, opacity: 0, duration: 0.6 })
+    .from(part("cap"), { y: -24, opacity: 0, duration: 0.5 })
     .from(
       part("liquid"),
-      { scaleY: 0, transformOrigin: "50% 100%", duration: 1.1, ease: "power2.inOut" },
+      { scaleY: 0, transformOrigin: "50% 100%", duration: 0.9, ease: "power2.inOut" },
       "-=0.2",
     )
     .from(
       part("guide"),
-      { scaleY: 0, transformOrigin: "50% 0%", duration: 0.6, stagger: 0.08 },
+      { scaleY: 0, transformOrigin: "50% 0%", duration: 0.5, stagger: 0.07 },
       "-=0.4",
     )
-    .from(part("label"), { opacity: 0, y: 6, duration: 0.4, stagger: 0.08 }, "<")
-    .from(part("base"), { opacity: 0, duration: 0.6 }, "<");
+    .from(part("label"), { opacity: 0, y: 6, duration: 0.35, stagger: 0.07 }, "<")
+    .from(part("base"), { opacity: 0, duration: 0.5 }, "<");
   rows.forEach((row) => {
     intro
       .add(fall(), ">-0.1")
       .from(
         row,
-        { scaleX: 0, opacity: 0, transformOrigin: "0% 50%", duration: 0.45, stagger: 0.06 },
-        ">-0.2",
+        { scaleX: 0, opacity: 0, transformOrigin: "0% 50%", duration: 0.32, stagger: 0.05 },
+        ">-0.3",
       );
   });
   intro
@@ -115,21 +143,19 @@ function heroFigure(): Cleanup {
       opacity: 0,
       scale: 0,
       transformOrigin: "50% 50%",
-      duration: 0.35,
-      stagger: 0.04,
+      duration: 0.3,
+      stagger: 0.03,
       ease: "back.out(2)",
     })
     .from(part("flag"), {
       opacity: 0,
       scale: 0.4,
       transformOrigin: "100% 50%",
-      duration: 0.5,
+      duration: 0.45,
       ease: "back.out(2.5)",
     });
 
-  // Afterwards, a quiet loop: the level dips, three more portions fall, the newest
-  // results pulse. Paused whenever the hero is off screen.
-  const idle = gsap.timeline({ repeat: -1, repeatDelay: 2.4, paused: true });
+  const idle = gsap.timeline({ repeat: -1, repeatDelay: 2.2, paused: true });
   idle
     .to(part("liquid"), {
       scaleY: 0.82,
@@ -162,22 +188,42 @@ function heroFigure(): Cleanup {
   return () => idle.kill();
 }
 
-// ── Section headlines: letters arrive one by one ────────────────────────────
-function chars(): Cleanup {
-  for (const el of all("[data-split='chars']")) {
+// ── Section headlines: every letter drops in, nearly together, every arrival ──
+function drops(): Cleanup {
+  for (const el of all("[data-drop]")) {
     gsap.set(el, { opacity: 1 });
     SplitText.create(el, {
       type: "words,chars",
+      mask: "words",
       autoSplit: true,
       onSplit: (self) =>
         gsap.from(self.chars, {
+          yPercent: -115,
           opacity: 0,
-          yPercent: 55,
-          duration: 0.7,
-          ease: "power3.out",
-          stagger: 0.016,
-          scrollTrigger: { trigger: el, start: "top 86%", once: true },
+          duration: 0.85,
+          ease: "back.out(1.3)",
+          stagger: { amount: 0.45, from: "random" },
+          scrollTrigger: replay(el, "top 82%"),
         }),
+    });
+  }
+  return () => {};
+}
+
+// ── Section labels decode from scrambled characters ──────────────────────────
+function scramble(): Cleanup {
+  for (const el of all("[data-scramble]")) {
+    const text = el.textContent ?? "";
+    gsap.to(el, {
+      duration: 1.1,
+      ease: "none",
+      scrambleText: {
+        text,
+        chars: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/–",
+        speed: 0.6,
+        revealDelay: 0.25,
+      },
+      scrollTrigger: replay(el, "top 90%"),
     });
   }
   return () => {};
@@ -194,74 +240,69 @@ function lines(): Cleanup {
       onSplit: (self) =>
         gsap.from(self.lines, {
           yPercent: 105,
-          duration: 1,
+          duration: 0.95,
           ease: "power4.out",
-          stagger: 0.09,
-          scrollTrigger: { trigger: el, start: "top 88%", once: true },
+          stagger: 0.08,
+          scrollTrigger: replay(el, "top 88%"),
         }),
     });
   }
   return () => {};
 }
 
-// ── Everything else rises softly, in small batches ─────────────────────────
+// ── Everything else rises softly, every arrival ─────────────────────────────
 function fades(): Cleanup {
-  const targets = all("[data-reveal='fade']");
-  gsap.set(targets, { opacity: 0, y: 28 });
-  ScrollTrigger.batch(targets, {
-    start: "top 90%",
-    once: true,
-    onEnter: (batch) =>
-      gsap.to(batch, {
+  for (const el of all("[data-reveal='fade']")) {
+    gsap.fromTo(
+      el,
+      { opacity: 0, y: 32 },
+      {
         opacity: 1,
         y: 0,
-        duration: 0.9,
+        duration: 0.85,
         ease: "power3.out",
-        stagger: 0.08,
-        overwrite: true,
-      }),
-  });
+        scrollTrigger: replay(el, "top 92%"),
+      },
+    );
+  }
   return () => {};
 }
 
-// ── Figures count up the first time they're seen ───────────────────────────
+// ── Figures count up, every arrival ────────────────────────────────────────
 function counters(): Cleanup {
   const els = all("[data-count]");
   for (const el of els) {
     const end = Number(el.dataset.count);
     const state = { value: 0 };
-    el.textContent = "0";
-    gsap.to(state, {
-      value: end,
-      duration: 1.6,
-      ease: "power2.out",
-      scrollTrigger: { trigger: el, start: "top 88%", once: true },
-      onUpdate: () => {
-        el.textContent = String(Math.round(state.value));
+    gsap.fromTo(
+      state,
+      { value: 0 },
+      {
+        value: end,
+        duration: 1.5,
+        ease: "power2.out",
+        scrollTrigger: replay(el, "top 90%"),
+        onUpdate: () => {
+          el.textContent = String(Math.round(state.value));
+        },
       },
-    });
+    );
   }
   return () => els.forEach((el) => (el.textContent = el.dataset.count ?? ""));
 }
 
-// ── The dark section: a rounded inset frame that opens, then closes again ──
+// ── The dark section: full-bleed when you arrive, rounds and pulls in as you leave ──
 function morph(): Cleanup {
   for (const el of all("[data-morph]")) {
     gsap.fromTo(
       el,
-      { clipPath: "inset(3% 3% 0% 3% round 40px)" },
+      { clipPath: "inset(0% 0% 0% 0% round 0px)" },
       {
-        clipPath: "inset(0% 0% 0% 0% round 0px)",
+        clipPath: "inset(0% 2.5% 5% 2.5% round 56px)",
         ease: "none",
-        scrollTrigger: { trigger: el, start: "top bottom", end: "top 15%", scrub: true },
+        scrollTrigger: { trigger: el, start: "bottom 95%", end: "bottom 25%", scrub: true },
       },
     );
-    gsap.to(el, {
-      clipPath: "inset(0% 3% 3% 3% round 40px)",
-      ease: "none",
-      immediateRender: false,
-      scrollTrigger: { trigger: el, start: "bottom 85%", end: "bottom top", scrub: true },
-    });
   }
   return () => {};
 }
@@ -275,32 +316,35 @@ function critical(): Cleanup {
   if (!box || !value || !flag || !path) return () => {};
   const steps = all("[data-critical-step]", box);
   const final = value.textContent ?? "";
-
-  value.textContent = "4.1";
-  value.dataset.state = "normal";
   const reading = { value: 4.1 };
-  gsap.set(flag, { opacity: 0, scale: 0.6 });
-  gsap.set(path, { strokeDashoffset: 1 });
-  gsap.set(steps, { opacity: 0, x: -12 });
+
   const tl = gsap.timeline({ paused: true });
-  tl.to(reading, {
-    value: 6.8,
-    duration: 1.4,
-    ease: "power2.inOut",
-    onUpdate: () => {
-      value.textContent = reading.value.toFixed(1);
-      value.dataset.state = reading.value >= 6.5 ? "critical" : "normal";
-    },
+  tl.call(() => {
+    reading.value = 4.1;
+    value.textContent = "4.1";
+    value.dataset.state = "normal";
   })
+    .set(flag, { opacity: 0, scale: 0.6 })
+    .set(path, { strokeDashoffset: 1 })
+    .set(steps, { opacity: 0, x: -12 })
+    .to(reading, {
+      value: 6.8,
+      duration: 1.3,
+      ease: "power2.inOut",
+      onUpdate: () => {
+        value.textContent = reading.value.toFixed(1);
+        value.dataset.state = reading.value >= 6.5 ? "critical" : "normal";
+      },
+    })
     .to(flag, { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(2)" })
-    .to(path, { strokeDashoffset: 0, duration: 2.4, ease: "none" }, "+=0.2")
-    .to(steps, { opacity: 1, x: 0, duration: 0.5, stagger: 0.6, ease: "power3.out" }, "<");
+    .to(path, { strokeDashoffset: 0, duration: 2.2, ease: "none" }, "+=0.15")
+    .to(steps, { opacity: 1, x: 0, duration: 0.45, stagger: 0.55, ease: "power3.out" }, "<");
 
   ScrollTrigger.create({
     trigger: box,
-    start: "top 70%",
-    once: true,
-    onEnter: () => void tl.play(),
+    start: "top 75%",
+    onEnter: () => void tl.restart(),
+    onEnterBack: () => void tl.restart(),
   });
   return () => {
     value.textContent = final;
@@ -308,44 +352,96 @@ function critical(): Cleanup {
   };
 }
 
-// ── Journey (desktop): the section holds while scrolling walks the steps ───
+// ── Delivery: the message arrives, the lab types, the result slip slides up ──
+function delivery(): Cleanup {
+  const phone = document.querySelector<HTMLElement>("[data-delivery]");
+  if (!phone) return () => {};
+  const message = phone.querySelector("[data-delivery-message]");
+  const typing = phone.querySelector("[data-delivery-typing]");
+  const slip = phone.querySelector("[data-delivery-slip]");
+  const rows = all("[data-delivery-row]", phone);
+  const dots = typing ? all("span", typing) : [];
+
+  const tl = gsap.timeline({ paused: true });
+  tl.set([message, typing, slip], { opacity: 0 })
+    .fromTo(phone, { y: 40, rotate: -2 }, { y: 0, rotate: 0, duration: 0.9, ease: "power3.out" })
+    .fromTo(
+      message,
+      { opacity: 0, scale: 0.85, transformOrigin: "0% 0%" },
+      { opacity: 1, scale: 1, duration: 0.45, ease: "back.out(1.8)" },
+      "-=0.3",
+    )
+    .to(typing, { opacity: 1, duration: 0.2 }, "+=0.3")
+    .fromTo(
+      dots,
+      { y: 0 },
+      { y: -5, duration: 0.25, yoyo: true, repeat: 3, stagger: 0.1, ease: "power1.inOut" },
+    )
+    .to(typing, { opacity: 0, duration: 0.2 })
+    .fromTo(slip, { opacity: 0, y: 70 }, { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" })
+    .fromTo(
+      rows,
+      { opacity: 0, x: -10 },
+      { opacity: 1, x: 0, duration: 0.35, stagger: 0.12 },
+      "-=0.25",
+    );
+
+  ScrollTrigger.create({
+    trigger: phone,
+    start: "top 75%",
+    onEnter: () => void tl.restart(),
+    onEnterBack: () => void tl.restart(),
+  });
+  return () => {};
+}
+
+// ── Journey (desktop): a short hold while the sample travels the track ─────
 function journeyPin(): Cleanup {
   const section = document.querySelector<HTMLElement>("[data-journey]");
   if (!section) return () => {};
   const steps = all("[data-journey-step]", section);
+  const stations = all<SVGGElement>("[data-station]", section);
+  const tube = section.querySelector<SVGGElement>("[data-journey-tube]");
+  const bar = section.querySelector<SVGLineElement>("[data-journey-bar]");
   const counter = section.querySelector<HTMLElement>("[data-journey-counter]");
   const title = section.querySelector<HTMLElement>("[data-journey-title]");
-  const bar = section.querySelector<HTMLElement>("[data-journey-bar]");
+  const text = section.querySelector<HTMLElement>("[data-journey-text]");
   const total = steps.length;
+  const track = 520; // station 1 → station 5, in the SVG's units
   const pad = (n: number) => String(n).padStart(2, "0");
   let current = -1;
 
   const show = (index: number) => {
     if (index === current) return;
     current = index;
-    steps.forEach((step, i) => (step.dataset.active = String(i === index)));
+    stations.forEach((station, i) => station.setAttribute("data-on", String(i <= index)));
     if (counter) counter.textContent = `${pad(index + 1)} / ${pad(total)}`;
-    if (title) {
-      title.textContent = steps[index]?.dataset.title ?? "";
+    const step = steps[index];
+    if (title && text && step) {
+      title.textContent = step.dataset.title ?? "";
+      text.textContent = step.dataset.text ?? "";
       gsap.fromTo(
-        title,
-        { yPercent: 35, opacity: 0 },
-        { yPercent: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+        [title, text],
+        { y: 18, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.45, stagger: 0.06, ease: "power3.out", overwrite: true },
       );
     }
   };
   show(0);
+  if (bar) gsap.set(bar, { scaleX: 0, transformOrigin: "40px 60px" });
 
   ScrollTrigger.create({
     trigger: section,
     start: "top top",
-    end: () => `+=${window.innerHeight * (total - 0.4)}`,
+    end: () => `+=${window.innerHeight * 1.8}`,
     pin: true,
-    scrub: true,
+    scrub: 0.6,
     onUpdate: (self) => {
-      show(Math.min(total - 1, Math.floor(self.progress * total)));
-      if (bar) gsap.set(bar, { scaleY: self.progress });
+      const p = self.progress;
+      if (tube) gsap.set(tube, { x: p * track });
+      if (bar) gsap.set(bar, { scaleX: p });
+      show(Math.min(total - 1, Math.round(p * (total - 1))));
     },
   });
-  return () => steps.forEach((step) => delete step.dataset.active);
+  return () => stations.forEach((station) => station.removeAttribute("data-on"));
 }

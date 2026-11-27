@@ -36,7 +36,7 @@ export function ThemePair({ children }: { children: ReactNode }) {
         <p className="text-caption text-ink-muted">Light</p>
         {children}
       </div>
-      <div data-theme="dark" className="flex flex-col gap-8 bg-surface p-8 text-ink">
+      <div data-tone="dark" className="flex flex-col gap-8 bg-surface p-8 text-ink">
         <p className="text-caption text-ink-muted">Dark</p>
         {children}
       </div>

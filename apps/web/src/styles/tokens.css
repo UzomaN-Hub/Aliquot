@@ -1,40 +1,45 @@
 /*
- * Design tokens (DESIGN.md, decision 014). The ONLY place colour values live.
- * Light: off-white (Bone) with Prussian blue. Dark: graphite with off-white text.
- * Eosin is for critical values only, in both. Tones stay muted: nothing glossy.
+ * Design tokens (DESIGN.md, decisions 014 and 018). The ONLY place colour values live.
+ * Bone (off-white) page, Prussian blue for action, graphite for dark surfaces,
+ * Eosin for critical values only. Muted tones, nothing glossy.
  *
- * Components use semantic names (bg-surface, text-ink, bg-primary…), so they never
- * need `dark:` variants: these variables flip with <html data-theme>.
- * The theme is chosen by lib/theme (Auto by time of day, or the person's choice),
- * not by the operating system.
+ * Dark mode darkens the furniture, not the room (decision 018): the PAGE stays Bone
+ * in both modes. Only containers marked `data-surface` (nav bars, panels, cards,
+ * menus, dialogs) and the top bar turn graphite. `data-tone="dark"` makes a block
+ * graphite whatever the mode (the landing's dark sections, footer, section bar).
+ *
+ * Components use semantic names (bg-surface, text-ink, bg-primary…). The variables
+ * change with the context, so components never need `dark:` variants.
  */
 
-/* ── Light: Bone + Prussian blue ─────────────────────────────── */
+/* ── Light palette: the page, every surface in light mode, and `data-tone="light"`
+      (a light block inside a dark one, e.g. the drawn phone's screen) ─── */
 :root,
-[data-theme="light"] {
+[data-tone="light"] {
   color-scheme: light;
-  --surface: #f6f3ec; /* Bone: every page background */
-  --surface-raised: #fbf9f4; /* panels that sit on the page (sign-in form, menus) */
+  --surface: #f6f3ec; /* Bone: the page */
+  --surface-raised: #fbf9f4; /* panels that sit on it (forms, menus, cards) */
   --ink: #1f1e1c; /* near-black text: 15.2:1 on Bone */
   --ink-secondary: #4a4843; /* 8.6:1 */
   --ink-muted: #5f5c57; /* 6.3:1: smallest allowed text colour */
   --ink-faint: #85827c; /* 3.4:1: NON-TEXT only (field edges, underlines) */
-  --primary: #1b3a5c; /* Prussian blue: buttons, top bar, highlights. 10.9:1 */
+  --primary: #1b3a5c; /* Prussian blue: buttons, highlights. 10.9:1 */
+  --primary-hover: #1f1e1c; /* the big pills swap Prussian ↔ ink on hover */
   --on-primary: #f6f3ec;
   --primary-tint: #e3e8ee; /* selected row, warning background */
-  --hover: #edeeee; /* row hover */
-  --hairline: #e4dfd3; /* dividers (warm, from Bone) */
+  --hover: #edeeee;
+  --hairline: #e4dfd3;
   --bar: #1b3a5c; /* top bar */
   --on-bar: #f6f3ec;
-  --on-bar-muted: #bcc7d3; /* secondary text on the bar: 6.9:1 */
+  --on-bar-muted: #bcc7d3; /* 6.9:1 on the bar */
   --eosin: #e0566f; /* critical fills and borders (non-text) */
   --eosin-text: #b23b56; /* critical text: 5.2:1 on Bone, 4.7:1 on primary-tint */
   --overlay-shadow: rgb(31 30 28 / 0.14);
-  --scrim: rgb(31 30 28 / 0.4);
-  --veil: rgb(246 243 236 / 0.62); /* over the sign-in background image */
+  --scrim: rgb(31 30 28 / 0.28);
+  --veil: rgb(246 243 236 / 0.62); /* over the sign-in backdrop */
+  --stain-film-opacity: 1;
 
-  /* The drawn blood film behind sign-in (Leishman-stained look, muted). Same in
-     both themes; only the veil above it changes. Never used for text. */
+  /* The drawn blood film behind sign-in (Leishman-stained look, muted). Never text. */
   --stain-plasma: #efe5e1;
   --stain-cell: #d9a0aa;
   --stain-cell-centre: #ecd3d4;
@@ -43,16 +48,25 @@
   --stain-platelet: #7d7aa0;
 }
 
-/* ── Dark: graphite + off-white, Prussian softened ───────────── */
+/* ── Dark mode: the page keeps its light palette; the bar goes graphite ─── */
 [data-theme="dark"] {
+  --bar: #262523;
+  --on-bar: #f2efe8;
+  --on-bar-muted: #a8a49c;
+}
+
+/* ── Graphite palette: surfaces in dark mode, and always-dark blocks ─── */
+[data-theme="dark"] [data-surface],
+[data-tone="dark"] {
   color-scheme: dark;
   --surface: #1e1e1c; /* graphite */
-  --surface-raised: #2a2927; /* panels must read as lifted off the page */
+  --surface-raised: #2a2927;
   --ink: #f2efe8; /* 15.6:1 */
   --ink-secondary: #c9c5bd; /* 10.6:1 */
   --ink-muted: #a8a49c; /* 7.0:1 on graphite, 5.8:1 on raised */
   --ink-faint: #7a7770; /* NON-TEXT only: 3.6:1 on graphite, 3.2:1 on raised */
-  --primary: #a9bcd0; /* Prussian blue, softened for dark: buttons, highlights */
+  --primary: #a9bcd0; /* Prussian softened for dark */
+  --primary-hover: #f2efe8;
   --on-primary: #1e1e1c; /* 8.9:1 */
   --primary-tint: #2c3138;
   --hover: #282827;
@@ -63,9 +77,7 @@
   --eosin: #e0566f;
   --eosin-text: #eb8a9a; /* 7.1:1 on graphite, 5.9:1 on primary-tint */
   --overlay-shadow: rgb(0 0 0 / 0.4);
-  --scrim: rgb(0 0 0 / 0.55);
+  --scrim: rgb(0 0 0 / 0.4);
   --veil: rgb(30 30 28 / 0.6);
-  /* The drawn film is light; in the dark it is dimmed to a faint texture so the
-     form panel, not the backdrop, is the brightest thing on screen. */
   --stain-film-opacity: 0.28;
 }
