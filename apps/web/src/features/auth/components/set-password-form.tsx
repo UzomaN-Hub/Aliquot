@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
@@ -11,22 +11,10 @@ import { FormError } from "@/components/ui/form-error";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Skeleton, SkeletonGroup } from "@/components/ui/skeleton";
 import { toApiError } from "@/lib/api/client";
+import { forgetLink, useLinkToken } from "@/lib/links/use-link-token";
 
 import { checkLink, setPassword, type LinkInfo } from "../api";
 import { setPasswordSchema, type SetPasswordValues } from "../schemas";
-
-// The token arrives in the URL #fragment, which browsers never send to a server
-// (decision 015). It's read here, in the page, and posted in a request body.
-function subscribe(callback: () => void) {
-  window.addEventListener("hashchange", callback);
-  return () => window.removeEventListener("hashchange", callback);
-}
-const readHash = () => window.location.hash;
-const noHash = () => "";
-
-function tokenFrom(hash: string): string | null {
-  return new URLSearchParams(hash.replace(/^#/, "")).get("token");
-}
 
 type State =
   | { kind: "checking" }
@@ -36,8 +24,7 @@ type State =
 
 /** Set password from an invite or reset link (PAGES.md 8, FLOWS.md §10). */
 export function SetPasswordForm({ lab }: { lab: string }) {
-  const hash = useSyncExternalStore(subscribe, readHash, noHash);
-  const token = tokenFrom(hash);
+  const token = useLinkToken();
   const [state, setState] = useState<State>({ kind: "checking" });
 
   useEffect(() => {
@@ -110,8 +97,7 @@ export function SetPasswordForm({ lab }: { lab: string }) {
       token={token ?? ""}
       info={state.info}
       onDone={() => {
-        // The link is spent: take it out of the address bar and history.
-        window.history.replaceState(null, "", window.location.pathname);
+        forgetLink();
         setState({ kind: "done", info: state.info });
       }}
     />

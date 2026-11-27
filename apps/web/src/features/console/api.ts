@@ -6,12 +6,17 @@ import { useConsoleSession, type ConsoleSession } from "@/stores/console-session
 import {
   consoleSessionSchema,
   createLabResponseSchema,
+  inviteAdminResponseSchema,
+  inviteInfoSchema,
+  inviteLinkSchema,
   labDetailSchema,
   labSummarySchema,
   signInStepSchema,
+  teamMemberSchema,
   type ConsoleSignInValues,
   type CreateLabOutput,
   type EditLabOutput,
+  type InviteAdminValues,
 } from "./schemas";
 
 const CSRF = { "X-CSRF-Protection": "1" };
@@ -141,4 +146,69 @@ export function changeLabStatus(
       body: { reason },
     }),
   );
+}
+
+// ── Platform team (decision 019) ─────────────────────────────────────────
+export const listTeam = () =>
+  withToken((token) =>
+    apiRequest("/platform/admins", z.array(teamMemberSchema), { accessToken: token }),
+  );
+
+export const getTeamMember = (id: string) =>
+  withToken((token) =>
+    apiRequest(`/platform/admins/${id}`, teamMemberSchema, { accessToken: token }),
+  );
+
+export function inviteAdmin(values: InviteAdminValues, idempotencyKey: string) {
+  return withToken((token) =>
+    apiRequest("/platform/admins", inviteAdminResponseSchema, {
+      method: "POST",
+      accessToken: token,
+      headers: { "Idempotency-Key": idempotencyKey },
+      body: values,
+    }),
+  );
+}
+
+export function resendInvite(id: string, idempotencyKey: string) {
+  return withToken((token) =>
+    apiRequest(`/platform/admins/${id}/invite`, inviteLinkSchema, {
+      method: "POST",
+      accessToken: token,
+      headers: { "Idempotency-Key": idempotencyKey },
+    }),
+  );
+}
+
+export type TeamAction = "deactivate" | "reactivate" | "reset-2fa";
+
+export function changeTeamMember(
+  id: string,
+  action: TeamAction,
+  reason: string,
+  idempotencyKey: string,
+) {
+  return withToken((token) =>
+    apiRequest(`/platform/admins/${id}/${action}`, teamMemberSchema, {
+      method: "POST",
+      accessToken: token,
+      headers: { "Idempotency-Key": idempotencyKey },
+      body: { reason },
+    }),
+  );
+}
+
+/** Public: the invite link is the proof. The token travels in the body, never a URL. */
+export function checkConsoleInvite(token: string) {
+  return apiRequest("/platform/auth/invite/check", inviteInfoSchema, {
+    method: "POST",
+    body: { token },
+  });
+}
+
+export async function acceptConsoleInvite(token: string, password: string): Promise<void> {
+  await apiRequest("/platform/auth/invite/accept", null, {
+    method: "POST",
+    body: { token, password },
+  });
 }

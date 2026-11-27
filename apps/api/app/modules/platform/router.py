@@ -12,15 +12,22 @@ from app.modules.auth.dependencies import client_info, require_csrf_header
 from app.modules.platform import service
 from app.modules.platform.dependencies import CurrentAdmin, IdempotencyKey
 from app.modules.platform.schemas import (
+    AcceptInviteRequest,
     AdminResponse,
     CreateLabRequest,
     CreateLabResponse,
+    InviteAdminRequest,
+    InviteAdminResponse,
+    InviteInfoResponse,
+    InviteLinkResponse,
+    InviteTokenRequest,
     LabDetailResponse,
     LabSummaryResponse,
     PlatformSessionResponse,
     PlatformSignInRequest,
     SignInStepResponse,
     StatusChangeRequest,
+    TeamMemberResponse,
     UpdateLabRequest,
     VerifyRequest,
 )
@@ -183,3 +190,104 @@ async def reactivate(
         claims, lab_id, False, body.reason, key, client_info(request)
     )
     return _json(result)
+
+
+# ── Platform team (decision 019) ─────────────────────────────────────────
+@router.get("/admins", summary="Every super-admin, oldest first")
+async def list_team(_: CurrentAdmin) -> list[TeamMemberResponse]:
+    return await service.list_team()
+
+
+@router.get("/admins/{admin_id}", summary="One super-admin's profile")
+async def get_team_member(admin_id: UUID, _: CurrentAdmin) -> TeamMemberResponse:
+    return await service.get_team_member(admin_id)
+
+
+@router.post(
+    "/admins",
+    summary="Invite a super-admin (they choose a password, then set up 2FA)",
+    status_code=status.HTTP_201_CREATED,
+    response_model=InviteAdminResponse,
+)
+async def invite_admin(
+    body: InviteAdminRequest, request: Request, claims: CurrentAdmin, key: IdempotencyKey
+) -> Response:
+    result = await service.invite_admin(claims, body, key, client_info(request))
+    return _json(result, status.HTTP_201_CREATED)
+
+
+@router.post(
+    "/admins/{admin_id}/invite",
+    summary="A new invite link (the old one stops working)",
+    response_model=InviteLinkResponse,
+)
+async def resend_invite(
+    admin_id: UUID, request: Request, claims: CurrentAdmin, key: IdempotencyKey
+) -> Response:
+    return _json(await service.resend_invite(claims, admin_id, key, client_info(request)))
+
+
+@router.post(
+    "/admins/{admin_id}/deactivate",
+    summary="Deactivate a super-admin; their sessions end at once",
+    response_model=TeamMemberResponse,
+)
+async def deactivate_admin(
+    admin_id: UUID,
+    body: StatusChangeRequest,
+    request: Request,
+    claims: CurrentAdmin,
+    key: IdempotencyKey,
+) -> Response:
+    result = await service.set_admin_active(
+        claims, admin_id, False, body.reason, key, client_info(request)
+    )
+    return _json(result)
+
+
+@router.post(
+    "/admins/{admin_id}/reactivate",
+    summary="Let a deactivated super-admin sign in again",
+    response_model=TeamMemberResponse,
+)
+async def reactivate_admin(
+    admin_id: UUID,
+    body: StatusChangeRequest,
+    request: Request,
+    claims: CurrentAdmin,
+    key: IdempotencyKey,
+) -> Response:
+    result = await service.set_admin_active(
+        claims, admin_id, True, body.reason, key, client_info(request)
+    )
+    return _json(result)
+
+
+@router.post(
+    "/admins/{admin_id}/reset-2fa",
+    summary="Clear a super-admin's 2FA (lost phone); they set it up again at sign-in",
+    response_model=TeamMemberResponse,
+)
+async def reset_admin_2fa(
+    admin_id: UUID,
+    body: StatusChangeRequest,
+    request: Request,
+    claims: CurrentAdmin,
+    key: IdempotencyKey,
+) -> Response:
+    result = await service.reset_admin_2fa(claims, admin_id, body.reason, key, client_info(request))
+    return _json(result)
+
+
+@router.post("/auth/invite/check", summary="Who a super-admin invite link is for")
+async def check_invite(body: InviteTokenRequest) -> InviteInfoResponse:
+    return await service.check_invite(body.token)
+
+
+@router.post(
+    "/auth/invite/accept",
+    summary="Choose a password from an invite link",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def accept_invite(body: AcceptInviteRequest, request: Request) -> None:
+    await service.accept_invite(body.token, body.password, client_info(request))

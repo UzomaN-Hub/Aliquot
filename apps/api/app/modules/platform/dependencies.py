@@ -5,6 +5,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from app.core.errors import AppError
 from app.core.platform_security import PlatformClaims, decode_platform_access_token
+from app.modules.platform import service
 
 _bearer = HTTPBearer(auto_error=False)
 
@@ -12,12 +13,14 @@ _bearer = HTTPBearer(auto_error=False)
 async def current_admin(
     credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(_bearer)],
 ) -> PlatformClaims:
-    """The signed-in super-admin. A lab token never passes: different audience."""
+    """The signed-in super-admin. A lab token never passes (different audience), and a
+    token whose admin was deactivated or whose session was ended stops at once."""
     if credentials is None:
         raise AppError(401, "not_signed_in", "Sign in to continue.")
     claims = decode_platform_access_token(credentials.credentials)
     if claims is None:
         raise AppError(401, "token_expired", "Your sign-in has expired. Sign in again.")
+    await service.require_live_session(claims)
     return claims
 
 

@@ -18,12 +18,15 @@ class PlatformAdmin(Base):
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid7)
     email: Mapped[str] = mapped_column(unique=True)
     full_name: Mapped[str]
-    password_hash: Mapped[str]
+    # None until an invited admin opens their link and chooses a password.
+    password_hash: Mapped[str | None]
     totp_secret_enc: Mapped[str | None]
     totp_last_step: Mapped[int | None]
     totp_failed_attempts: Mapped[int] = mapped_column(server_default="0")
     totp_locked_until: Mapped[datetime | None]
     active: Mapped[bool] = mapped_column(server_default="true")
+    invited_by: Mapped[UUID | None] = mapped_column(ForeignKey("platform_admins.id"))
+    deactivated_at: Mapped[datetime | None]
     last_login_at: Mapped[datetime | None]
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(server_default=func.now())
@@ -43,6 +46,21 @@ class PlatformSession(Base):
     expires_at: Mapped[datetime]
     revoked_at: Mapped[datetime | None]
     replaced_by: Mapped[UUID | None] = mapped_column(ForeignKey("platform_sessions.id"))
+
+
+class PlatformInvite(Base):
+    """A link that lets an invited super-admin choose their password. Stored hashed."""
+
+    __tablename__ = "platform_invites"
+
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid7)
+    admin_id: Mapped[UUID] = mapped_column(ForeignKey("platform_admins.id"))
+    created_by: Mapped[UUID] = mapped_column(ForeignKey("platform_admins.id"))
+    token_hash: Mapped[str] = mapped_column(unique=True)
+    expires_at: Mapped[datetime]
+    used_at: Mapped[datetime | None]
+    revoked_at: Mapped[datetime | None]
+    created_at: Mapped[datetime] = mapped_column(server_default=func.now())
 
 
 class PlatformIdempotencyKey(Base):

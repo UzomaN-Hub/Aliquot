@@ -10,7 +10,7 @@
 ## Roles
 | Role | Scope | Responsibilities |
 | --- | --- | --- |
-| Super-admin | Platform only (Uzoma) | Create, suspend, reactivate or remove labs; set subdomain and initial branding; create each lab's first Manager. **No access to any lab's patients, samples or results.** Sees only tenant-level info (name, status, staff count, usage numbers) |
+| Super-admin | Platform only (Uzoma) | Create, suspend, reactivate or remove labs; set subdomain and initial branding; create each lab's first Manager; invite, deactivate and reset other super-admins (never themselves; decision 019). **No access to any lab's patients, samples or results.** Sees only tenant-level info (name, status, staff count, usage numbers) |
 | Manager | One lab | Staff accounts and roles, section assignment, test catalogue and prices, reference ranges, organisms/antibiotics, branding, lab settings, reports |
 | Chief Scientist | Assigned sections | Verify and release results, amend released results, acknowledge critical alerts, oversee the section's worklist |
 | Lab Scientist | Assigned sections | Receive or reject samples, enter results |

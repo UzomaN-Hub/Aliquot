@@ -1,20 +1,25 @@
 """Database for the browser (end-to-end) tests: `uv run python -m app.scripts.e2e_seed`.
 
-Same as dev_db (migrate, role passwords, Tavnit Labs) plus one console admin per
-browser, so Chromium, Firefox and WebKit each run the full 2FA setup without
-tripping over each other. Re-running resets those admins' 2FA, so the setup flow
-is tested every time. Fictional data; refuses to run outside ENVIRONMENT=local.
+Same as dev_db (migrate, role passwords, Tavnit Labs) plus, per browser:
+- a console admin with no 2FA, so Chromium, Firefox and WebKit each run the full 2FA
+  setup without tripping over each other (re-running resets it);
+- a "team" admin whose 2FA secret is known to the tests (e2e/console-team.spec.ts),
+  so the team test can sign in directly.
+Fictional data; refuses to run outside ENVIRONMENT=local.
 """
 
 from sqlalchemy import create_engine, text
 
 from app.core.config import get_settings
 from app.core.ids import uuid7
+from app.core.platform_security import encrypt_secret
 from app.core.security import hash_password
 from app.scripts.dev_db import migrate, seed_working_lab, set_app_role_password
 
 BROWSERS = ("chromium", "firefox", "webkit")
 E2E_ADMIN_PASSWORD = "e2e-admin-password-2026"  # noqa: S105  # fictional, test-only
+# A test-only authenticator secret (base32), the same in e2e/console-team.spec.ts.
+E2E_TEAM_TOTP_SECRET = "JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP"  # noqa: S105  # fictional, test-only
 
 
 def main() -> None:
@@ -47,8 +52,25 @@ def main() -> None:
                     "hash": password_hash,
                 },
             )
+            connection.execute(
+                text(
+                    "INSERT INTO platform_admins (id, email, full_name, password_hash, "
+                    "totp_secret_enc) VALUES (:id, :email, :name, :hash, :secret) "
+                    "ON CONFLICT (email) DO UPDATE SET password_hash = EXCLUDED.password_hash, "
+                    "totp_secret_enc = EXCLUDED.totp_secret_enc, totp_last_step = NULL, "
+                    "totp_failed_attempts = 0, totp_locked_until = NULL, active = true, "
+                    "deactivated_at = NULL"
+                ),
+                {
+                    "id": uuid7(),
+                    "email": f"e2e-team-{browser}@platform.example",
+                    "name": f"E2E Team {browser.title()}",
+                    "hash": password_hash,
+                    "secret": encrypt_secret(E2E_TEAM_TOTP_SECRET),
+                },
+            )
     engine.dispose()
-    print("E2E database ready: Tavnit Labs + one console admin per browser.")
+    print("E2E database ready: Tavnit Labs + two console admins per browser.")
 
 
 if __name__ == "__main__":

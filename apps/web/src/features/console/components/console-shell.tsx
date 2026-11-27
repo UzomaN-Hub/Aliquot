@@ -95,6 +95,7 @@ export function ConsoleShell({
       label: "Create a lab",
       description: "Add a lab and its first Manager",
     },
+    { href: "/console/team", label: "Platform team", description: "Super-admins and invites" },
   ];
 
   return (
@@ -108,7 +109,10 @@ export function ConsoleShell({
               <span className="text-body text-on-bar-muted">Console</span>
             </>
           }
-          items={[{ href: "/console", label: "Labs" }]}
+          items={[
+            { href: "/console", label: "Labs", exact: true, also: ["/console/labs"] },
+            { href: "/console/team", label: "Team" },
+          ]}
           right={
             <>
               <p className="hidden text-right leading-tight sm:block">

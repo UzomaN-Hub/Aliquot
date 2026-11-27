@@ -9,6 +9,8 @@
 4. Lab detail (subdomain, branding, status, suspend/reactivate)
 5. Platform settings
 
+   Added by decision 019: **Platform team** (`/console/team`), **Super-admin profile** (`/console/team/<id>`), **Accept invite** (`/console/accept-invite`).
+
 ## B. Lab app — authentication — 3
 6. Login (lab-branded)
 7. Forgot password

@@ -6,7 +6,12 @@ import type { ReactNode } from "react";
 
 import { cn } from "@/lib/cn";
 
-export type TopBarItem = { href: string; label: string; exact?: boolean };
+/** `exact`: only this address. `also`: further sections that belong to this item
+ *  (Labs at /console also owns /console/labs/…). */
+export type TopBarItem = { href: string; label: string; exact?: boolean; also?: string[] };
+
+const under = (pathname: string, base: string) =>
+  pathname === base || pathname.startsWith(`${base}/`);
 
 /**
  * The Prussian top bar (decision 014), shared by the lab app and the console.
@@ -35,9 +40,9 @@ export function TopBar({
         <nav aria-label="Main" className="hidden h-full md:block">
           <ul className="flex h-full items-stretch gap-7">
             {items.map((item) => {
-              const current = item.exact
-                ? pathname === item.href
-                : pathname === item.href || pathname.startsWith(`${item.href}/`);
+              const current =
+                (item.exact ? pathname === item.href : under(pathname, item.href)) ||
+                (item.also ?? []).some((base) => under(pathname, base));
               return (
                 <li key={item.href} className="flex">
                   <Link

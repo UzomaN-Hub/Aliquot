@@ -57,7 +57,14 @@ def make_user(
 ADMIN_EMAIL = "admin@platform.example"
 
 
-def make_admin(db: Connection, *, totp_secret: str | None = None, active: bool = True) -> UUID:
+def make_admin(
+    db: Connection,
+    *,
+    totp_secret: str | None = None,
+    active: bool = True,
+    email: str = ADMIN_EMAIL,
+    full_name: str = "Platform Admin",
+) -> UUID:
     """A super-admin. With `totp_secret`, 2FA is already set up (stored encrypted)."""
     from app.core.platform_security import encrypt_secret
 
@@ -65,11 +72,12 @@ def make_admin(db: Connection, *, totp_secret: str | None = None, active: bool =
     db.execute(
         text(
             "INSERT INTO platform_admins (id, email, full_name, password_hash, totp_secret_enc, "
-            "active) VALUES (:id, :email, 'Platform Admin', :hash, :secret, :active)"
+            "active) VALUES (:id, :email, :name, :hash, :secret, :active)"
         ),
         {
             "id": admin_id,
-            "email": ADMIN_EMAIL,
+            "email": email,
+            "name": full_name,
             "hash": PASSWORD_HASH,
             "secret": encrypt_secret(totp_secret) if totp_secret else None,
             "active": active,
