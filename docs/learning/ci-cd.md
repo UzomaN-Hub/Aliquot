@@ -67,12 +67,17 @@
 **Trigger `workflow_run`** — runs when the **CI** workflow *finishes* on `main`; the first job checks it *passed*. A red `main` never deploys. `workflow_dispatch` adds a manual "Run workflow" button.
 **`head_sha`** — every job checks out the exact commit CI tested, not whatever `main` has become since.
 **`concurrency` with `cancel-in-progress: false`** — two quick merges deploy one after the other; a migration is never killed halfway.
-**Job `changes`** — squash merges make one commit per PR, so `git diff HEAD~1 HEAD` is the whole PR. Web-only merges skip the API deploy (Vercel handles the web).
+**Job `changes`** — squash merges make one commit per PR, so `git diff HEAD~1 HEAD` is the whole PR. It reports two answers, `api` and `web`. Web-only merges skip the API deploy (Vercel handles the web).
 **Job `migrate`** — `alembic upgrade head` against Supabase **before** the new code starts, so new code never meets an old schema. `--no-dev` installs only runtime packages. The connection string comes from the secret `STAGING_MIGRATION_DATABASE_URL` (owner role, Session pooler).
 **Job `deploy-api`**
 - Calls Render's **deploy hook** (secret `RENDER_DEPLOY_HOOK_URL`) with `ref=<sha>`.
 - Polls `/health` until it reports that commit (Render sets `RENDER_GIT_COMMIT`), so the job never "passes" against the old version.
 - **Smoke test:** asks for a lab that doesn't exist. A clean `404 lab_not_found` proves the API reached Postgres; a 500 means it can't.
+**Job `verify-web`** (decision 022) — runs when the web app changed. Vercel deploys the web on its own, so this job only *checks* it:
+- `sparse-checkout` fetches just `globals.css`; the job needs nothing else.
+- It polls the web's `/api/health` until `commit` matches this merge. Vercel sets `VERCEL_GIT_COMMIT_SHA`, and the health route reports it. This way the job never tests the old version.
+- It downloads the live page's stylesheet(s). Then it checks that every class defined in `globals.css` (lines starting with `.name`) appears in them.
+- Why: on 27 Nov, Vercel's build cache served the *old* compiled `globals.css` with the *new* pages. The new classes had no styles, so the wordmark showed at 14px and the pill had no colour. Our own CI tests passed because CI builds from scratch. This check fails loudly instead of letting Uzoma find it.
 **`environment: staging`** — groups the deploy jobs on GitHub's Environments page; protection rules (for example, required approval) can be added later without changing the YAML.
 
 **Secrets** live in GitHub → Settings → Secrets and variables → Actions. A workflow reads them as `${{ secrets.NAME }}`; GitHub hides them in logs. They never appear in the repo.

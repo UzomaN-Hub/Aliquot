@@ -86,6 +86,53 @@ test.describe("landing nav", () => {
     expect(mark?.width).toBeGreaterThan(0);
   });
 
+  test("Book a demo is Prussian in light mode, graphite in dark", async ({ page }) => {
+    // Set the theme in storage, then reload (an init script would re-run on reload).
+    await page.goto("/");
+    await page.evaluate(() => localStorage.setItem("theme", "light"));
+    await page.reload();
+    // In page order: the nav's pill, then the hero's.
+    const hero = page.getByRole("link", { name: /Book a demo/ }).nth(1);
+    await expect(hero).toHaveCSS("background-color", "rgb(27, 58, 92)");
+    // Inside the Prussian nav the pill is white, so it never disappears into the bar.
+    await expect(
+      page
+        .locator("header")
+        .getByRole("link", { name: /Book a demo/ })
+        .first(),
+    ).toHaveCSS("background-color", "rgb(246, 243, 236)");
+
+    await page.evaluate(() => localStorage.setItem("theme", "dark"));
+    await page.reload();
+    await expect(hero).toHaveCSS("background-color", "rgb(30, 30, 28)");
+  });
+
+  test("nav and section bar turn graphite over a dark section", async ({ page }) => {
+    await page.addInitScript(() => localStorage.setItem("theme", "light"));
+    await page.goto("/");
+    const nav = page.locator("header").first();
+    const bar = page.getByRole("navigation", { name: "Sections" });
+    await expect(nav).toHaveCSS("background-color", "rgb(27, 58, 92)");
+
+    // Scroll animations pin sections and add scroll space once they load, so wait
+    // for them, then aim at the dark block (and re-aim until it is under the nav).
+    await expect(page.locator("html")).toHaveClass(/motion-ready/);
+    await expect
+      .poll(async () => {
+        await page.evaluate(() => {
+          const block = document.querySelector('[data-nav-tone="dark"]') as HTMLElement;
+          window.scrollTo(0, block.getBoundingClientRect().top + window.scrollY + 40);
+        });
+        return nav.getAttribute("data-tone");
+      })
+      .toBe("dark");
+    await expect(nav).toHaveCSS("background-color", "rgb(30, 30, 28)");
+    await expect(bar).toHaveAttribute("data-tone", "dark");
+
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await expect(nav).toHaveAttribute("data-tone", "bar");
+  });
+
   test("keeps graphite in dark mode", async ({ page }) => {
     await page.addInitScript(() => localStorage.setItem("theme", "dark"));
     await page.goto("/");

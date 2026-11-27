@@ -44,6 +44,7 @@ export function Disciplines() {
       <div
         data-morph
         data-tone="dark"
+        data-nav-tone="dark"
         className="relative overflow-hidden bg-surface px-6 py-28 text-ink sm:px-12 lg:py-40"
       >
         <p

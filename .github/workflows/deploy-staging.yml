@@ -23,7 +23,7 @@ env:
   API_URL: https://aliquot-api.onrender.com
 
 jobs:
-  # Only CI that passed, and only when the API (or this file) changed.
+  # Only CI that passed; reports whether the API and the web app changed.
   changes:
     name: Detect API changes
     if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
@@ -31,6 +31,7 @@ jobs:
     timeout-minutes: 5
     outputs:
       api: ${{ steps.filter.outputs.api }}
+      web: ${{ steps.filter.outputs.web }}
       sha: ${{ steps.filter.outputs.sha }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -47,7 +48,13 @@ jobs:
         run: |
           echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
           if [ "$EVENT" = "workflow_dispatch" ]; then
-            echo "api=true" >> "$GITHUB_OUTPUT"; exit 0
+            echo "api=true" >> "$GITHUB_OUTPUT"; echo "web=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          # The web check runs when the web app (or this file) changed.
+          if git diff --name-only HEAD~1 HEAD | grep -qE '^(apps/web/|\.github/workflows/deploy-staging\.yml$)'; then
+            echo "web=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "web=false" >> "$GITHUB_OUTPUT"
           fi
           # Squash merges: one commit per PR, so HEAD~1..HEAD is the whole PR.
           if git diff --name-only HEAD~1 HEAD | grep -qE '^(apps/api/|\.github/workflows/deploy-staging\.yml$)'; then
@@ -123,3 +130,53 @@ jobs:
           body=$(curl --silent --max-time 15 "$API_URL/v1/labs/smoke-test-missing/branding")
           echo "$body"
           test "$(echo "$body" | jq -r .code)" = "lab_not_found"
+
+  # The web app deploys through Vercel's Git integration, not this workflow. Once
+  # Vercel serves this commit, prove its stylesheet is the one we wrote: every class
+  # defined in globals.css must be in the live CSS. A stale build cache once served
+  # the old globals.css with new pages (decision 022); this makes that loud.
+  verify-web:
+    name: Check web stylesheet on Vercel
+    needs: changes
+    if: needs.changes.outputs.web == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      WEB_URL: https://aliquot-labs.vercel.app
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.changes.outputs.sha }}
+          persist-credentials: false
+          sparse-checkout: apps/web/src/styles/globals.css
+          sparse-checkout-cone-mode: false
+
+      - name: Wait for Vercel to serve this commit
+        env:
+          SHA: ${{ needs.changes.outputs.sha }}
+        run: |
+          for attempt in $(seq 1 60); do
+            commit=$(curl --silent --max-time 10 "$WEB_URL/api/health" | jq -r '.commit // empty' || true)
+            if [ "$commit" = "$SHA" ]; then echo "Live: $commit"; exit 0; fi
+            echo "Attempt $attempt: serving '${commit:-unknown}', waiting for $SHA"
+            sleep 15
+          done
+          echo "Vercel did not serve the new version within 15 minutes."; exit 1
+
+      - name: Every globals.css class is in the live stylesheet
+        run: |
+          curl --silent --fail --max-time 20 "$WEB_URL/" -o page.html
+          : > live.css
+          for path in $(grep -oE '/_next/static/[^"]+\.css' page.html | sort -u); do
+            curl --silent --fail --max-time 20 "$WEB_URL$path" >> live.css
+          done
+          test -s live.css || { echo "No stylesheet found on the page."; exit 1; }
+          missing=0
+          for class in $(grep -oE '^\s+\.[a-z][a-z0-9-]*' apps/web/src/styles/globals.css | tr -d ' ' | sort -u); do
+            grep -qF -- "$class" live.css || { echo "Missing from the live CSS: $class"; missing=1; }
+          done
+          if [ "$missing" = 1 ]; then
+            echo "The live stylesheet is out of date. Redeploy on Vercel without the build cache."
+            exit 1
+          fi
+          echo "Live stylesheet matches globals.css."

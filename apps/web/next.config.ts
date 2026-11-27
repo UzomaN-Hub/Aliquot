@@ -4,6 +4,12 @@ import { serverConfig } from "./src/lib/config";
 
 const nextConfig: NextConfig = {
   cacheComponents: true,
+  experimental: {
+    // Off (decision 022): on Vercel the restored build cache once served the OLD
+    // compiled globals.css with the new pages, so new classes had no styles.
+    // A slower build that is always right beats a fast one that can be stale.
+    turbopackFileSystemCacheForBuild: false,
+  },
   partialPrefetching: true,
   turbopack: {
     rules: {

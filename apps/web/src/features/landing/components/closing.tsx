@@ -6,6 +6,7 @@ export function Closing({ demoProps }: { demoProps: React.ComponentProps<"a"> })
     <section
       id="contact"
       aria-labelledby="contact-title"
+      data-nav-tone="dark"
       className="scroll-mt-28 bg-primary px-6 py-28 text-on-primary sm:px-12 lg:py-40"
     >
       <div className="mx-auto grid max-w-[1520px] gap-14 lg:grid-cols-[1.3fr_0.7fr] lg:items-end">

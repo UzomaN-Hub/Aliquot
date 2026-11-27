@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 
 import { cn } from "@/lib/cn";
 
+import { useToneUnder } from "../use-tone-under";
+
 export const BAR_SECTIONS = [
   { id: "problem", label: "Problem" },
   { id: "journey", label: "Journey" },
@@ -18,7 +20,7 @@ export const BAR_SECTIONS = [
 
 /**
  * The sticky section bar (decision 018): a pill at the bottom of the screen, Prussian
- * in light mode and graphite in dark (decision 021),
+ * in light mode and graphite in dark (decision 021); graphite too over a dark block,
  * listing every section. The one you're reading lights up; a thin line underneath
  * grows with your progress down the page. It appears after the hero and steps aside
  * for the footer. On phones it scrolls sideways and keeps the current one in view.
@@ -28,6 +30,8 @@ export function SectionBar() {
   const [visible, setVisible] = useState(false);
   const [progress, setProgress] = useState(0);
   const listRef = useRef<HTMLUListElement>(null);
+  const barRef = useRef<HTMLElement>(null);
+  const tone = useToneUnder(barRef, "middle");
 
   useEffect(() => {
     const sections = BAR_SECTIONS.map((s) => document.getElementById(s.id)).filter(
@@ -66,10 +70,11 @@ export function SectionBar() {
 
   return (
     <nav
+      ref={barRef}
       aria-label="Sections"
-      data-tone="bar"
+      data-tone={tone}
       className={cn(
-        "fixed inset-x-3 bottom-4 z-30 mx-auto w-fit max-w-[calc(100vw-1.5rem)] rounded-full bg-surface p-1.5 text-ink shadow-overlay [[data-theme=dark]_&]:bg-surface/95 [[data-theme=dark]_&]:backdrop-blur-md transition-[opacity,transform] duration-500",
+        "fixed inset-x-3 bottom-4 z-30 mx-auto w-fit max-w-[calc(100vw-1.5rem)] rounded-full bg-surface p-1.5 text-ink shadow-overlay [[data-theme=dark]_&]:bg-surface/95 [[data-theme=dark]_&]:backdrop-blur-md transition-[opacity,transform,background-color] duration-500",
         visible ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-6 opacity-0",
       )}
     >
