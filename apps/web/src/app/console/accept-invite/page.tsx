@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import { AuthFrame } from "@/components/patterns/auth-frame";
 import { StainBackdrop } from "@/components/patterns/stain-backdrop";
+import { Wordmark } from "@/components/patterns/wordmark";
 import { AcceptInvite } from "@/features/console/components/accept-invite";
 import { serverConfig } from "@/lib/config";
 
@@ -17,7 +18,13 @@ export default function AcceptInvitePage() {
   return (
     <div className="relative isolate flex min-h-dvh flex-col">
       <StainBackdrop />
-      <AuthFrame wordmark={serverConfig.PLATFORM_NAME}>
+      <AuthFrame
+        brand={<Wordmark name={serverConfig.PLATFORM_NAME} />}
+        cardLabel={`${serverConfig.PLATFORM_NAME} · platform team`}
+        tag="Join"
+        status="Secure link"
+        help="Link not working? Ask the super-admin who invited you for a new one."
+      >
         <AcceptInvite platformName={serverConfig.PLATFORM_NAME} />
       </AuthFrame>
     </div>

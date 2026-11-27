@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 
+import { AuthLead, AuthTitle } from "@/components/patterns/auth-frame";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { FormError } from "@/components/ui/form-error";
@@ -56,36 +57,40 @@ export function SetPasswordForm({ lab }: { lab: string }) {
   if (state.kind === "checking") {
     return (
       <SkeletonGroup label="Checking your link">
-        <div className="flex flex-col gap-6">
-          <Skeleton className="h-8 w-48" />
+        <div className="flex flex-col gap-8">
+          <Skeleton className="h-12 w-64" />
           <Skeleton className="h-5 w-full" />
-          <Skeleton className="h-11 w-full" />
-          <Skeleton className="h-11 w-full" />
+          <Skeleton className="h-12 w-full" />
+          <Skeleton className="h-12 w-full" />
+          <Skeleton className="h-15 w-full" />
         </div>
       </SkeletonGroup>
     );
   }
   if (state.kind === "invalid") {
     return (
-      <div className="flex flex-col gap-3">
-        <h1 className="text-title font-medium">This link can&apos;t be used.</h1>
-        <p className="text-body-lg text-ink-secondary">{state.message}</p>
-      </div>
+      <>
+        <AuthTitle lead="This link" accent="can't be used" />
+        <p className="mt-4 animate-rise text-body-lg text-ink-secondary [animation-delay:250ms]">
+          {state.message}
+        </p>
+      </>
     );
   }
   if (state.kind === "done") {
     return (
-      <div className="flex flex-col gap-4">
-        <p className="flex items-center gap-2 text-body text-ink-secondary">
-          <span aria-hidden="true">✓</span> Password set
+      <div className="flex flex-col">
+        <p className="mb-5 flex animate-pop items-center gap-2 font-mono text-caption tracking-label text-ink-secondary uppercase">
+          <span aria-hidden="true" className="text-primary">
+            ✓
+          </span>{" "}
+          Password set
         </p>
-        <h1 className="text-figure font-medium">
-          You&apos;re all set, {state.info.full_name.split(" ")[0]}.
-        </h1>
-        <p className="text-body-lg text-ink-secondary">
+        <AuthTitle lead="You're all set," accent={state.info.full_name.split(" ")[0] ?? ""} />
+        <p className="mt-4 animate-rise text-body-lg text-ink-secondary [animation-delay:250ms]">
           Sign in with {state.info.email} and your new password.
         </p>
-        <Button asChild size="lg" className="mt-4 w-full">
+        <Button asChild size="xl" className="mt-10">
           <Link href={`/l/${lab}/sign-in`}>Go to sign-in</Link>
         </Button>
       </div>
@@ -143,37 +148,41 @@ function ChoosePassword({
   const welcome = info.purpose === "invite";
   return (
     <>
-      <h1 className="text-figure font-medium">
-        {welcome ? `Welcome, ${info.full_name.split(" ")[0]}.` : "Choose a new password"}
-      </h1>
-      <p className="mt-2 mb-9 text-body-lg text-ink-secondary">
+      {welcome ? (
+        <AuthTitle lead="Welcome," accent={info.full_name.split(" ")[0] ?? ""} />
+      ) : (
+        <AuthTitle lead="Choose a new" accent="password" />
+      )}
+      <AuthLead>
         {welcome
           ? `Choose a password to finish setting up your ${info.lab_name} account (${info.email}).`
           : `For ${info.email}.`}
-      </p>
-      <form noValidate onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
+      </AuthLead>
+      <form
+        noValidate
+        onSubmit={handleSubmit(onSubmit)}
+        className="stagger flex flex-col gap-7 [--stagger-start:320ms]"
+      >
         <FormError message={formError} />
         {/* Lets password managers save the new password against the right account. */}
         <input type="email" autoComplete="username" value={info.email} readOnly hidden />
         <Field
+          look="line"
+          index={1}
           label="New password"
           hint="At least 12 characters. A short sentence works well."
           error={errors.password?.message}
         >
           <PasswordInput size="lg" autoComplete="new-password" {...register("password")} />
         </Field>
-        <Field label="Type it again" error={errors.confirm?.message}>
+        <Field look="line" index={2} label="Type it again" error={errors.confirm?.message}>
           <PasswordInput size="lg" autoComplete="new-password" {...register("confirm")} />
         </Field>
-        <Button
-          type="submit"
-          size="lg"
-          className="mt-3 w-full"
-          pending={isSubmitting}
-          pendingLabel="Saving…"
-        >
-          Set password
-        </Button>
+        <div className="pt-2">
+          <Button type="submit" size="xl" pending={isSubmitting} pendingLabel="Saving…">
+            Set password
+          </Button>
+        </div>
       </form>
     </>
   );

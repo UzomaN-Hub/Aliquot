@@ -5,7 +5,7 @@ import { useState, type ComponentProps } from "react";
 import { cn } from "@/lib/cn";
 
 import { Button } from "./button";
-import { controlClasses, useFieldControl, type ControlSize } from "./field";
+import { controlClasses, LineFrame, useFieldControl, type ControlSize } from "./field";
 
 type PasswordInputProps = Omit<ComponentProps<"input">, "size" | "type"> & { size?: ControlSize };
 
@@ -20,9 +20,9 @@ export function PasswordInput({
   ...props
 }: PasswordInputProps) {
   const [visible, setVisible] = useState(false);
-  const { id, describedBy, invalid } = useFieldControl();
+  const { id, describedBy, invalid, look } = useFieldControl();
 
-  return (
+  const field = (
     <div className="relative">
       <input
         id={id}
@@ -31,7 +31,7 @@ export function PasswordInput({
         spellCheck={false}
         aria-describedby={describedBy}
         aria-invalid={invalid || undefined}
-        className={cn(controlClasses(invalid, size), "pr-16", className)}
+        className={cn(controlClasses(invalid, size, look), "pr-16", className)}
         {...props}
       />
       <Button
@@ -41,7 +41,7 @@ export function PasswordInput({
         // The visible word starts the spoken name (WCAG 2.5.3 "label in name").
         aria-label={visible ? "Hide password" : "Show password"}
         onClick={() => setVisible((shown) => !shown)}
-        className="absolute inset-y-0 right-3 my-auto h-fit"
+        className={cn("absolute inset-y-0 my-auto h-fit", look === "line" ? "right-0" : "right-3")}
       >
         {visible ? "Hide" : "Show"}
       </Button>
@@ -50,4 +50,5 @@ export function PasswordInput({
       </span>
     </div>
   );
+  return look === "line" ? <LineFrame invalid={invalid}>{field}</LineFrame> : field;
 }

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 
+import { Wordmark } from "@/components/patterns/wordmark";
 import { cn } from "@/lib/cn";
 
 import { CtaPill } from "./cta-pill";
@@ -15,8 +16,8 @@ const LINKS = [
 ] as const;
 
 /**
- * Landing navigation. A container (data-surface), so in dark mode it turns graphite
- * while the page stays Bone (decision 018). Phones get a round menu button that
+ * Landing navigation. Prussian in light mode, graphite in dark (data-tone="bar",
+ * decision 021), while the page stays Bone (decision 018). Phones get a round menu button that
  * opens the links full screen.
  */
 export function SiteNav({
@@ -45,22 +46,18 @@ export function SiteNav({
 
   return (
     <header
-      data-surface
+      data-tone="bar"
       className={cn(
-        "fixed inset-x-0 top-0 z-40 bg-surface/90 text-ink backdrop-blur-md transition-[border-color] duration-300",
+        "fixed inset-x-0 top-0 z-40 bg-surface text-ink [[data-theme=dark]_&]:bg-surface/90 [[data-theme=dark]_&]:backdrop-blur-md transition-[border-color] duration-300",
         scrolled ? "border-b border-hairline" : "border-b border-transparent",
       )}
     >
       <nav
         aria-label="Main"
-        className="mx-auto flex h-22 max-w-[1520px] items-center gap-12 px-6 sm:px-12"
+        className="mx-auto flex h-24 max-w-[1520px] items-center gap-12 px-6 sm:px-12"
       >
-        <a
-          href="#top"
-          className="font-serif text-[clamp(2rem,1.6rem+1vw,2.6rem)] leading-none tracking-headline"
-        >
-          {name}
-          <span className="text-eosin">.</span>
+        <a href="#top" aria-label={`${name}, back to the top`} className="shrink-0">
+          <Wordmark name={name} className="text-wordmark" />
         </a>
         <ul className="hidden items-center gap-9 xl:flex">
           {LINKS.map((link) => (
@@ -108,7 +105,7 @@ export function SiteNav({
       {open && (
         <div
           id="mobile-menu"
-          className="h-[calc(100dvh-5.5rem)] overflow-y-auto border-t border-hairline px-6 pb-10 sm:px-12 xl:hidden"
+          className="h-[calc(100dvh-6rem)] overflow-y-auto border-t border-hairline px-6 pb-10 sm:px-12 xl:hidden"
         >
           <ul className="flex flex-col">
             {LINKS.map((link, i) => (

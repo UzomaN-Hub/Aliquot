@@ -26,9 +26,14 @@ export function Modal({
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         {/* The page behind blurs, so the decision in front is the only thing in focus. */}
+        <Dialog.Overlay
+          data-testid="modal-overlay"
+          className="fixed inset-0 z-40 animate-fade bg-scrim backdrop-blur-md"
+        />
         <Dialog.Content
           data-surface
-          className="fixed top-1/2 left-1/2 z-50 max-h-[90dvh] w-[min(92vw,500px)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-panel border border-hairline bg-surface-raised p-8 text-ink shadow-overlay"
+          // Centred with `translate` (Tailwind 4), so the entrance can use `transform`.
+          className="fixed top-1/2 left-1/2 z-50 max-h-[90dvh] w-[min(92vw,500px)] -translate-x-1/2 -translate-y-1/2 animate-pop overflow-y-auto rounded-panel border border-hairline bg-surface-raised p-8 text-ink shadow-overlay"
         >
           <Dialog.Title className="text-title font-medium">{title}</Dialog.Title>
           <Dialog.Description asChild>

@@ -1,3 +1,4 @@
+import { Wordmark } from "@/components/patterns/wordmark";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 import { MotionToggle } from "./motion-toggle";
@@ -63,9 +64,8 @@ export function SiteFooter({
     >
       <div className="mx-auto flex max-w-[1520px] flex-col gap-20">
         <div className="flex flex-col justify-between gap-8 border-b border-hairline pb-10 sm:flex-row sm:items-center">
-          <p className="font-serif text-[2.6rem] leading-none tracking-headline">
-            {name}
-            <span className="text-eosin">.</span>
+          <p>
+            <Wordmark name={name} className="text-wordmark" />
           </p>
           <p className="font-mono text-body text-ink-muted uppercase">
             Every sample, accounted for.

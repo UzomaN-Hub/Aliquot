@@ -13,7 +13,7 @@ Haematoxylin & Eosin (H&E), the classic pathology stain. Calm and editorial: the
 
 - **Eosin** `#E0566F` (text-safe `#B23B56` light, `#EB8A9A` dark): attention only. Critical results, STAT, one accent per page, under 5% of any screen.
 - **Tints, not new colours:** secondary and muted text are warm greys mixed from the text colour. The selected row is a Prussian tint (`#E3E8EE` / `#2C3138`). Hairlines are warm (`#E4DFD3` / `#3A3936`). Raised panels (sign-in form, menus) are `#FBF9F4` / `#262523`.
-- **The page background is always Bone, in both modes (decision 018).** Dark mode darkens the furniture, not the room: only the top bar and containers marked `data-surface` (nav bars, panels, cards, menus, dialogs) turn graphite. `data-tone="dark"` makes a block graphite in either mode (landing dark sections, footer, section bar). The main colour only fills small elements, never a whole page.
+- **The page background is always Bone, in both modes (decision 018).** Dark mode darkens the furniture, not the room: only the top bar and containers marked `data-surface` (nav bars, panels, cards, menus, dialogs) turn graphite. `data-tone="dark"` makes a block graphite in either mode (landing dark sections, footer). `data-tone="bar"` is Prussian in light mode and graphite in dark (landing nav and section bar, decision 021). The main colour only fills small elements and bars, never a whole page.
 - **Dialogs blur the page behind them**, so the decision in front is the only thing in focus.
 - **Theme:** Auto (default) is dark from 19:00 and light from 08:00 by the device clock. **Light** and **Dark** override it and are remembered on the device. The control is on sign-in pages and in the app menu. The operating system's dark mode does not decide it.
 
@@ -22,7 +22,7 @@ Haematoxylin & Eosin (H&E), the classic pathology stain. Calm and editorial: the
 ## Typography
 | Font | Use |
 | --- | --- |
-| Instrument Serif | Landing headlines, lab name/wordmark, PDF headings only |
+| Instrument Serif | Landing headlines, sign-in style page headlines, lab name/wordmark, PDF headings only |
 | Atkinson Hyperlegible Next | All interface text |
 | Atkinson Hyperlegible Mono | Result values, lab numbers, units, timers (tabular figures) |
 
@@ -33,16 +33,19 @@ Headline setting (landing and lab wordmark): large Instrument Serif with tight l
 ## Rules
 1. **One primary action per screen.** Only filled main-colour (Prussian) button. Everything else is a text link or appears on demand (e.g. row actions on selection).
 2. **Two button styles:**
-   - Marketing: full pill, Prussian fill, Bone text (landing only; revisited at the landing stage).
+   - Marketing: full pill, Prussian fill, Bone text (landing only; revisited at the landing stage). The landing's big action pill is Prussian in light mode and turns ink on hover (decision 021).
+   - Sign-in style pages: the big pill (`size="xl"`, 60px, full width, arrow tile), Prussian, ink on hover (decision 020).
    - In-app: 2px radius, Prussian fill.
    - Secondary actions: underlined text link, never a second boxed button.
-3. **Shape follows importance, near-square (decision 009):** controls (buttons, fields, result cells) 2px · modals, menus and working panels 4px · landing hero panels 28px (revisited at the landing stage) · table rows square with hairline dividers, never card-per-row. The selected nav item has no filled block: ink colour, semibold and a 2px Haematoxylin bar on its left edge.
+3. **Shape follows importance, near-square (decision 009):** controls (buttons, fields, result cells) 2px · modals, menus and working panels 4px · landing hero panels and the sign-in card 28px (decision 020) · table rows square with hairline dividers, never card-per-row. The selected nav item has no filled block: ink colour, semibold and a 2px Haematoxylin bar on its left edge.
    - **Avoid the generic look.** For every component, name the usual AI/shadcn default (10px soft rectangles, lavender pill highlights, shimmer skeletons, spinner buttons) and don't use it.
-4. **No badges, pills or eyebrow tags as decoration.** (Landing exception, decision 018: section header rows (number + label + tagline) and the "Coming soon" tag are functional navigation and status.) Status (CH, CL, H, L, STAT) is shown as coloured text, not chips, unless a badge is functionally necessary.
+4. **No badges, pills or eyebrow tags as decoration.** (Landing exception, decision 018: section header rows (number + label + tagline) and the "Coming soon" tag are functional navigation and status. Sign-in exception, decision 020: the card's page tag ("Sign in") and the "Secure sign-in" status say where you are.) Status (CH, CL, H, L, STAT) is shown as coloured text, not chips, unless a badge is functionally necessary.
 5. **Hierarchy through type, not boxes.** Small muted label above a large figure replaces cards and borders.
 6. **No gradients, shadows (except menus/dialogs), stock illustrations, emoji, or decorative icons.**
 7. **Navigation is role-based, in a top bar, never a sidebar (decision 014).** The Prussian top bar holds the lab's name on the left, the 3–6 places this role uses most, and on the right the person's name with a menu (nine-dot button). The menu lists everything else they can do, the theme control and Sign out. Work is laid out across the page by importance, not stacked in a side column.
-7a. **Sign-in pages:** one generous form panel centred over a slowly drifting, heavily blurred blood film (drawn, not a photo), with a Bone or graphite veil for contrast. The panel floats over the backdrop like a dialog, so it carries the overlay shadow. In dark mode the film is dimmed to a faint texture, so the panel is always the brightest thing on screen. The lab's name stands large at the top left; the theme control is at the top right. Never a split screen or a card floating on a gradient.
+7a. **Sign-in pages (decision 020):** one wide card (up to 720px, at least 560px tall on desktop) centred over a slowly drifting, heavily blurred blood film (drawn, not a photo), with a Bone or graphite veil for contrast. The card is shaped like a request form: a strip naming who it's for and a small tag naming the page, a dashed perforation, a large Instrument Serif headline (last part Prussian, Eosin full stop), line fields, the big pill, a perforated rule with "Forgot your password?", and a foot with help on the left and Privacy policy · Terms on the right. Pages not built yet open "Coming soon". The lab's name (or the Aliquot wordmark) stands large at the top left; a "Secure sign-in" status and the theme control are at the top right. Never a split screen or a card floating on a gradient.
+7b. **Fields have two looks (decision 020).** *Line*: numbered mono label, one 2px underline, a Prussian line that draws across on focus. Used on sign-in, set-password and short forms with room to breathe. *Box*: the near-square box, for bench screens, result entry, search, multi-line text and dense forms. Most public fields are lines; not all fields are.
+7c. **The Aliquot wordmark:** the mark (a drop of Eosin falling into a tube) beside the name from `PLATFORM_NAME`, large wherever the platform introduces itself: landing nav and footer (40–56px), console sign-in, console top bar.
 8. **Tempo:** generous space on landing and public pages; efficient density on bench screens (36–40px rows).
 9. **Flags never rely on colour alone:** H, L, CH, CL always appear as text.
 10. **Grid:** 4px base. Vary container sizes deliberately by importance; never uniform blocks.
@@ -99,7 +102,9 @@ Avoid them. Keep controls enabled and explain on use ("Select at least one test"
 
 ### Focus and motion
 - Visible focus: 2px Haematoxylin ring with a 2px offset. Result entry works fully by keyboard.
-- Motion: 150–200 ms ease-out, for state changes only. Respect reduced-motion. Landing page animation is defined in ANIMATION.md. The one other ambient motion is the sign-in backdrop's slow drift (60 s, transform only, off for reduced motion; decision 014).
+- Motion: state changes 150–200 ms ease-out. Landing page animation is defined in ANIMATION.md.
+- **Quiet motion everywhere else (decision 020):** pages settle in (under 0.5 s), forms, rows and details arrive in reading order, dialogs and menus pop in, the current top-bar rule draws in, line fields draw their focus line, the Aliquot mark's drop falls once. CSS only, transform and opacity only, under 0.7 s, nothing waits on a script. Never animate a result value, a flag, or anything being read to make a decision. Ambient motion only on sign-in pages: the backdrop's slow drift (decision 014) and the status dot.
+- Reduced motion: every animation is off (`none`); everything is simply there.
 
 ### Copy
 Sentence case. Say what happened, then what to do. No "Oops", "successfully", "please" or exclamation marks.

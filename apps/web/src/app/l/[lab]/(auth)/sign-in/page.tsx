@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
-import { AuthFrame } from "@/components/patterns/auth-frame";
+import { AuthCard, AuthFrame, AuthLead, AuthTitle } from "@/components/patterns/auth-frame";
 import { StainBackdrop } from "@/components/patterns/stain-backdrop";
 import { Skeleton, SkeletonGroup } from "@/components/ui/skeleton";
 import { SignInForm } from "@/features/auth/components/sign-in-form";
@@ -41,46 +41,53 @@ async function SignInScreen({ slug }: { slug: string }) {
   if (!lab) notFound();
 
   return (
-    <AuthFrame wordmark={lab.name} footer={`Powered by ${serverConfig.PLATFORM_NAME}`}>
+    <AuthFrame
+      brand={lab.name}
+      cardLabel={`${lab.name} · staff`}
+      tag="Sign in"
+      help={labHelp}
+      credit={`Powered by ${serverConfig.PLATFORM_NAME}`}
+    >
       {lab.status === "active" ? (
         <>
-          <h1 className="text-figure font-medium">
-            Sign in<span className="sr-only"> to {lab.name}</span>
-          </h1>
-          <p className="mt-2 mb-9 text-body-lg text-ink-secondary">Use your work email.</p>
+          <AuthTitle lead="Welcome" accent="back" />
+          <AuthLead>Sign in to {lab.name} with your work email.</AuthLead>
           <SignInForm lab={lab.slug} />
         </>
       ) : (
-        <div className="flex flex-col gap-3">
+        <>
           {/* Suspended lab (FLOWS.md §1): staff can't sign in; data is kept. */}
-          <h1 className="text-title font-medium">{lab.name} is unavailable right now.</h1>
-          <p className="text-body-lg text-ink-secondary">
+          <AuthTitle lead={`${lab.name} is unavailable`} accent="right now" />
+          <p className="mt-4 animate-rise text-body-lg text-ink-secondary [animation-delay:250ms]">
             Staff can&apos;t sign in at the moment. Your lab&apos;s records are safe. Contact your
             lab manager for help.
           </p>
-        </div>
+        </>
       )}
     </AuthFrame>
   );
 }
 
+/** Staff don't contact the platform directly: their lab manager runs their account. */
+const labHelp = "Need help? Ask your lab manager.";
+
 function SignInSkeleton() {
   return (
     <SkeletonGroup label="Loading sign-in">
       <div className="flex min-h-dvh flex-col">
-        <div className="px-6 pt-6 sm:px-10 sm:pt-8">
-          <Skeleton className="h-8 w-56 sm:h-10 sm:w-72" />
+        <div className="px-6 pt-6 sm:px-12 sm:pt-8">
+          <Skeleton className="h-10 w-56 sm:h-14 sm:w-80" />
         </div>
-        <div className="flex flex-1 items-center justify-center px-4 py-12">
-          <div
-            data-surface
-            className="flex w-full max-w-[460px] flex-col gap-6 rounded-panel border border-hairline bg-surface-raised px-7 py-12 sm:px-12 sm:py-14"
-          >
-            <Skeleton className="h-8 w-32" />
-            <Skeleton className="h-11 w-full" />
-            <Skeleton className="h-11 w-full" />
-            <Skeleton className="h-11 w-full" />
-          </div>
+        <div className="flex flex-1 items-center justify-center px-4 py-10 sm:py-14">
+          <AuthCard cardLabel={<Skeleton className="h-3 w-32" />} tag="Sign in" help="">
+            <div className="flex flex-col gap-8">
+              <Skeleton className="h-12 w-64" />
+              <Skeleton className="h-5 w-full" />
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-15 w-full" />
+            </div>
+          </AuthCard>
         </div>
       </div>
     </SkeletonGroup>

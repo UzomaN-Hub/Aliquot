@@ -17,7 +17,8 @@ export const BAR_SECTIONS = [
 ] as const;
 
 /**
- * The sticky section bar (decision 018): a graphite pill at the bottom of the screen
+ * The sticky section bar (decision 018): a pill at the bottom of the screen, Prussian
+ * in light mode and graphite in dark (decision 021),
  * listing every section. The one you're reading lights up; a thin line underneath
  * grows with your progress down the page. It appears after the hero and steps aside
  * for the footer. On phones it scrolls sideways and keeps the current one in view.
@@ -66,9 +67,9 @@ export function SectionBar() {
   return (
     <nav
       aria-label="Sections"
-      data-tone="dark"
+      data-tone="bar"
       className={cn(
-        "fixed inset-x-3 bottom-4 z-30 mx-auto w-fit max-w-[calc(100vw-1.5rem)] rounded-full bg-surface/95 p-1.5 text-ink shadow-overlay backdrop-blur-md transition-[opacity,transform] duration-500",
+        "fixed inset-x-3 bottom-4 z-30 mx-auto w-fit max-w-[calc(100vw-1.5rem)] rounded-full bg-surface p-1.5 text-ink shadow-overlay [[data-theme=dark]_&]:bg-surface/95 [[data-theme=dark]_&]:backdrop-blur-md transition-[opacity,transform] duration-500",
         visible ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-6 opacity-0",
       )}
     >

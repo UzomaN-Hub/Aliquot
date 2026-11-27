@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 
+import { AuthNote, SoonLink } from "@/components/patterns/auth-frame";
 import { Button } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/field";
 import { FormError } from "@/components/ui/form-error";
@@ -63,33 +64,53 @@ export function SignInForm({ lab }: { lab: string }) {
   }
 
   return (
-    <form noValidate onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
-      <FormError message={formError} />
-      <Field label="Email" error={errors.email?.message}>
-        <Input
-          size="lg"
-          type="email"
-          inputMode="email"
-          autoComplete="username"
-          autoCapitalize="none"
-          spellCheck={false}
-          {...register("email")}
-        />
-      </Field>
-      <Field label="Password" error={errors.password?.message}>
-        <PasswordInput size="lg" autoComplete="current-password" {...register("password")} />
-      </Field>
-      <div className="pt-3">
-        <Button
-          type="submit"
-          size="lg"
-          className="w-full"
-          pending={isSubmitting || redirecting}
-          pendingLabel="Signing in…"
+    <>
+      <form
+        noValidate
+        onSubmit={handleSubmit(onSubmit)}
+        className="stagger flex flex-col gap-7 [--stagger-start:320ms]"
+      >
+        <FormError message={formError} />
+        <Field look="line" index={1} label="Email" error={errors.email?.message}>
+          <Input
+            size="lg"
+            type="email"
+            inputMode="email"
+            autoComplete="username"
+            autoCapitalize="none"
+            spellCheck={false}
+            placeholder="Your work email"
+            {...register("email")}
+          />
+        </Field>
+        <Field look="line" index={2} label="Password" error={errors.password?.message}>
+          <PasswordInput
+            size="lg"
+            autoComplete="current-password"
+            placeholder="Your password"
+            {...register("password")}
+          />
+        </Field>
+        <div className="pt-2">
+          <Button
+            type="submit"
+            size="xl"
+            pending={isSubmitting || redirecting}
+            pendingLabel="Signing in…"
+          >
+            Sign in
+          </Button>
+        </div>
+      </form>
+      <AuthNote note="Resetting by email arrives soon.">
+        <SoonLink
+          strong
+          soon="Password reset"
+          text="Resetting your password by email arrives very soon. Until then, ask your lab manager for help."
         >
-          Sign in
-        </Button>
-      </div>
-    </form>
+          Forgot your password?
+        </SoonLink>
+      </AuthNote>
+    </>
   );
 }

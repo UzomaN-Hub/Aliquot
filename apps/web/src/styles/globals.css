@@ -27,6 +27,10 @@
   --color-eosin: var(--eosin);
   --color-eosin-text: var(--eosin-text);
   --color-scrim: var(--scrim);
+  --color-cta: var(--cta);
+  --color-on-cta: var(--on-cta);
+  --color-cta-hover: var(--cta-hover);
+  --color-on-cta-hover: var(--on-cta-hover);
   --color-veil: var(--veil);
 
   /* Fonts: exactly three (loaded with next/font in app/layout.tsx). */
@@ -60,6 +64,9 @@
   --text-headline--line-height: 0.98;
   --text-mega: clamp(3.4rem, 1.1rem + 8vw, 8.25rem);
   --text-mega--line-height: 0.92;
+  /* The platform or lab name at the top of public pages (landing nav, auth pages). */
+  --text-wordmark: clamp(2.5rem, 1.95rem + 1.5vw, 3.5rem);
+  --text-wordmark--line-height: 1;
 
   /* Weights 400–600 only. */
   --font-weight-*: initial;
@@ -67,16 +74,18 @@
   --font-weight-medium: 500;
   --font-weight-semibold: 600;
 
-  /* Headline setting (landing + lab wordmark only). */
+  /* Headline setting (landing, auth headlines, wordmarks). Labels: mono capitals
+     spaced out (decision 020: numbered line fields, auth card strips). */
   --tracking-*: initial;
   --tracking-headline: -0.03em;
+  --tracking-label: 0.12em;
 
   /* Shape follows importance, near-square (decision 009).
      `rounded-full` (marketing pill) is built in. */
   --radius-*: initial;
   --radius-control: 2px; /* buttons, fields, result cells */
   --radius-panel: 4px; /* modals, menus, working panels */
-  --radius-hero: 28px; /* landing hero panels only */
+  --radius-hero: 28px; /* landing hero panels and the auth card (decision 020) */
 
   /* Shadows only on menus and dialogs. */
   --shadow-*: initial;
@@ -85,8 +94,44 @@
   --drop-shadow-*: initial;
   --text-shadow-*: initial;
 
-  /* No animation outside the landing hero (it brings its own). */
+  /* Quiet motion in the app (decision 020): a few named entrances, all under 0.7 s,
+     transform and opacity only, never on a result value. The landing brings its own. */
   --animate-*: initial;
+  --animate-fade: fade 240ms cubic-bezier(0, 0, 0.2, 1) both;
+  --animate-pop: pop 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-rise: rise 640ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-page: rise-sm 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-breathe: breathe 2.6s ease-in-out infinite;
+
+  @keyframes fade {
+    from {
+      opacity: 0;
+    }
+  }
+  @keyframes pop {
+    from {
+      opacity: 0;
+      transform: translateY(6px) scale(0.97);
+    }
+  }
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(18px);
+    }
+  }
+  @keyframes rise-sm {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+  }
+  @keyframes breathe {
+    50% {
+      opacity: 0.35;
+      transform: scale(0.7);
+    }
+  }
 
   /* Motion for state changes: 150–200 ms ease-out. */
   --default-transition-duration: 150ms;
@@ -339,8 +384,147 @@
     }
   }
 
-  /* Sign-in backdrop: a slow drift, the only motion outside the landing hero
-     (decision 014). Transform only, so it never triggers layout. */
+  /* ── App motion (decision 020) ──────────────────────────────────────────────
+     Things arrive in reading order, then hold still. Nothing waits on a script:
+     these are CSS animations that start on the first frame and end visible. */
+
+  /* Children rise one after another (forms, table rows, detail lists). After the
+     12th they arrive together, so a long table never makes anyone wait. */
+  .stagger > * {
+    animation: rise 560ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation-delay: calc(var(--stagger-start, 0ms) + var(--i, 0) * 55ms);
+  }
+  .stagger > :nth-child(2) {
+    --i: 1;
+  }
+  .stagger > :nth-child(3) {
+    --i: 2;
+  }
+  .stagger > :nth-child(4) {
+    --i: 3;
+  }
+  .stagger > :nth-child(5) {
+    --i: 4;
+  }
+  .stagger > :nth-child(6) {
+    --i: 5;
+  }
+  .stagger > :nth-child(7) {
+    --i: 6;
+  }
+  .stagger > :nth-child(8) {
+    --i: 7;
+  }
+  .stagger > :nth-child(9) {
+    --i: 8;
+  }
+  .stagger > :nth-child(10) {
+    --i: 9;
+  }
+  .stagger > :nth-child(11) {
+    --i: 10;
+  }
+  .stagger > :nth-child(n + 12) {
+    --i: 11;
+  }
+
+  /* Headline words rise out of a mask, like the landing hero (auth and big titles). */
+  .rise-mask {
+    display: inline-block;
+    overflow: clip;
+    padding-bottom: 0.12em; /* room for descenders */
+    margin-bottom: -0.12em;
+    vertical-align: top;
+  }
+  .rise-word {
+    display: inline-block;
+    animation: word-rise 900ms cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation-delay: calc(120ms + var(--i, 0) * 80ms);
+  }
+  @keyframes word-rise {
+    from {
+      transform: translateY(110%);
+    }
+  }
+
+  /* Line fields (decision 020): one bold underline; on focus a Prussian line draws
+     across it from the left. The line, not an outline ring, is the focus mark. */
+  .field-line {
+    position: relative;
+    display: block;
+  }
+  .field-line::after {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    bottom: 0;
+    height: 3px;
+    background: var(--primary);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 360ms cubic-bezier(0.22, 1, 0.36, 1);
+    pointer-events: none;
+  }
+  .field-line:focus-within::after {
+    transform: scaleX(1);
+  }
+  .field-line[data-invalid]::after {
+    background: var(--eosin);
+  }
+
+  /* The Aliquot mark: a drop falls into the tube and the level rises a little,
+     once on arrival; hovering the wordmark makes the drop bob. */
+  .mark-drop,
+  .mark-level {
+    transform-box: fill-box;
+  }
+  .mark-drop {
+    animation: mark-drop 760ms cubic-bezier(0.5, 0, 0.75, 0) 200ms both;
+  }
+  .mark-level {
+    transform-origin: bottom;
+    animation: mark-level 520ms cubic-bezier(0.22, 1, 0.36, 1) 900ms both;
+  }
+  .group:hover .mark-drop {
+    animation: mark-bob 900ms ease-in-out;
+  }
+  @keyframes mark-drop {
+    0% {
+      opacity: 0;
+      transform: translateY(-120%);
+    }
+    70% {
+      opacity: 1;
+      transform: translateY(8%);
+    }
+    100% {
+      transform: none;
+    }
+  }
+  @keyframes mark-level {
+    from {
+      transform: scaleY(0.72);
+    }
+  }
+  @keyframes mark-bob {
+    40% {
+      transform: translateY(22%);
+    }
+  }
+
+  /* The current top-bar place: its rule draws in from the left. */
+  .nav-current::after {
+    transform-origin: left;
+    animation: rule-draw 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  @keyframes rule-draw {
+    from {
+      transform: scaleX(0);
+    }
+  }
+
+  /* Sign-in backdrop: a slow drift (decision 014). Transform only, so it never
+     triggers layout. */
   .stain-drift {
     animation: stain-drift 60s ease-in-out infinite alternate;
     will-change: transform;
@@ -367,6 +551,16 @@
     *::after {
       transition-duration: 0.01ms !important;
       scroll-behavior: auto !important;
+    }
+    /* No entrances and nothing loops (decision 020): everything is simply there.
+       `none`, not a near-zero duration: WebKit still paints one hidden frame of a
+       0.01 ms animation. Safe for the landing, which only hides content for its
+       entrances when `motion-on` is set, and that is never set for reduced motion.
+       The skeleton keeps its 300 ms wait: that is about flicker, not motion. */
+    :not(.skeleton-delay),
+    ::before,
+    ::after {
+      animation: none !important;
     }
   }
 }

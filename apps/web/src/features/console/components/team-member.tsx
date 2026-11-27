@@ -68,7 +68,7 @@ export function TeamMember({ id }: { id: string }) {
         </p>
       </div>
 
-      <dl className="grid gap-x-10 gap-y-6 sm:grid-cols-2">
+      <dl className="stagger grid gap-x-10 gap-y-6 [--stagger-start:120ms] sm:grid-cols-2">
         <Fact label="Email" value={data.email} />
         <Fact
           label="Two-step sign-in"
