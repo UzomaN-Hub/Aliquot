@@ -63,6 +63,14 @@ export function startMotion(): Cleanup {
   ScrollTrigger.sort();
   ScrollTrigger.refresh();
 
+  // A deep link (/#safety) was scrolled to before the pin added its space above.
+  // Chrome and Firefox keep the place (scroll anchoring); Safari doesn't, so go
+  // back to the linked section now that the page has its final height.
+  const linked = window.location.hash
+    ? document.getElementById(window.location.hash.slice(1))
+    : null;
+  if (linked) linked.scrollIntoView({ block: "start" });
+
   return () => {
     media.revert();
     ctx.revert();
