@@ -197,13 +197,117 @@ jobs:
       - name: Production build
         run: pnpm build
 
+  # Browser tests: the real web app + API + Postgres, driven in Chromium, Firefox
+  # and WebKit (Safari's engine). Runs when either app changes (decision 016).
+  e2e:
+    name: E2E · Chromium, Firefox, WebKit
+    needs: changes
+    if: needs.changes.outputs.api == 'true' || needs.changes.outputs.web == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: aliquot
+          POSTGRES_PASSWORD: aliquot_dev
+          POSTGRES_DB: aliquot
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U aliquot -d aliquot"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      # ENVIRONMENT=local: plain http://localhost like a laptop, so cookies work in
+      # every engine (WebKit drops Secure cookies on http). Dummy, CI-only values.
+      ENVIRONMENT: local
+      PLATFORM_NAME: Aliquot
+      PLATFORM_DOMAIN: localhost
+      TENANT_MODE: path
+      DATABASE_URL: postgresql+psycopg://aliquot_app:aliquot_app_dev@127.0.0.1:5432/aliquot
+      PLATFORM_DATABASE_URL: postgresql+psycopg://aliquot_platform:aliquot_platform_dev@127.0.0.1:5432/aliquot
+      MIGRATION_DATABASE_URL: postgresql+psycopg://aliquot:aliquot_dev@127.0.0.1:5432/aliquot
+      PUBLIC_WEB_URL: http://localhost:3000
+      JWT_SECRET: ci-only-secret-that-is-at-least-32-characters
+      TOTP_ENCRYPTION_KEY: mb6PcIuROO_Su8c0V4l5kFex_g3-6AhGVXsnVWUOIMM= # CI-only, protects nothing
+      API_URL: http://127.0.0.1:8000
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install uv (with download cache)
+        uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
+        with:
+          version: "0.13.9"
+          enable-cache: true
+          cache-dependency-glob: apps/api/uv.lock
+          cache-python: true
+
+      - name: Install API dependencies
+        working-directory: apps/api
+        run: uv sync --locked --no-dev
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+        with:
+          package_json_file: apps/web/package.json
+
+      - name: Install Node 22 (with pnpm download cache)
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22"
+          cache: pnpm
+          cache-dependency-path: apps/web/pnpm-lock.yaml
+
+      - name: Install web dependencies
+        working-directory: apps/web
+        run: pnpm install --frozen-lockfile
+
+      # Browsers are ~400 MB; keep them between runs, keyed on the lock file
+      # (which pins the Playwright version).
+      - name: Cache Playwright browsers
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('apps/web/pnpm-lock.yaml') }}
+
+      - name: Install browsers and their system libraries
+        working-directory: apps/web
+        run: pnpm exec playwright install --with-deps chromium firefox webkit
+
+      - name: Seed the database (Tavnit Labs + one console admin per browser)
+        working-directory: apps/api
+        run: uv run python -m app.scripts.e2e_seed
+
+      - name: Build the web app
+        working-directory: apps/web
+        run: pnpm build
+
+      # Playwright starts the API and `next start` itself (playwright.config.ts).
+      - name: Browser tests
+        working-directory: apps/web
+        run: pnpm e2e
+
+      # Screenshots and traces of what went wrong. Fictional data only.
+      - name: Keep the report when tests fail
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report
+          retention-days: 7
+
   # The one check the main-branch ruleset requires. Passes when every job
   # passed or was skipped (nothing relevant changed); fails otherwise.
   # New jobs only need adding to `needs:` here, never to the ruleset.
   ci-ok:
     name: CI passed
     if: always()
-    needs: [changes, api, web]
+    needs: [changes, api, web, e2e]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:

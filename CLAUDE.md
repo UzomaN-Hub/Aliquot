@@ -99,7 +99,7 @@ All decisions live in `docs/`. Read the ones relevant to the task before writing
 | Migrate | `uv run alembic upgrade head` (roll back: `uv run alembic downgrade base`) |
 | Backend tests | `uv run pytest` (needs Docker Postgres running; builds its own `aliquot_test` database) |
 | Frontend tests | `pnpm test` |
-| End-to-end | `pnpm e2e` |
+| End-to-end (browsers) | CI runs Chromium, Firefox, WebKit. Locally: `uv run python -m app.scripts.e2e_seed` (apps/api), then `pnpm build; pnpm e2e --project=chromium` (apps/web). First time: `pnpm exec playwright install chromium` |
 | Lint + types | `uv run ruff check .; uv run ruff format --check .; uv run mypy .` · `pnpm lint; pnpm format:check; pnpm typecheck` (PowerShell 5.1 has no `&&`) |
 | Format | `uv run ruff format .` · `pnpm format` |
 
