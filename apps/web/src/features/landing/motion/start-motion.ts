@@ -44,6 +44,8 @@ export function startMotion(): Cleanup {
   const ctx = gsap.context(() => {
     cleanups.push(
       heroFigure(),
+      heroParallax(),
+      marquee(),
       drops(),
       scramble(),
       lines(),
@@ -155,7 +157,7 @@ function heroFigure(): Cleanup {
       ease: "back.out(2.5)",
     });
 
-  const idle = gsap.timeline({ repeat: -1, repeatDelay: 2.2, paused: true });
+  const idle = gsap.timeline({ repeat: -1, repeatDelay: 0.9, paused: true });
   idle
     .to(part("liquid"), {
       scaleY: 0.82,
@@ -169,7 +171,66 @@ function heroFigure(): Cleanup {
       { opacity: 0.55, duration: 0.25, yoyo: true, repeat: 1, stagger: 0.05 },
       "-=0.15",
     )
-    .to(part("liquid"), { scaleY: 1, duration: 1, ease: "power2.inOut" }, "<");
+    .to(part("liquid"), { scaleY: 1, duration: 1, ease: "power2.inOut" }, "<")
+    .fromTo(
+      part("check"),
+      { scale: 0 },
+      {
+        scale: 1,
+        transformOrigin: "50% 50%",
+        duration: 0.35,
+        ease: "back.out(2.4)",
+        stagger: { each: 0.05, from: "random" },
+      },
+      "<0.2",
+    );
+
+  // A tab change sends a burst of portions into its lane (all three for Delivery):
+  // copies of the lane's drop fall one after another and its results re-stack.
+  const laneOf = (el: Element) => el.closest("[data-lane-group]")?.getAttribute("data-lane-group");
+  const onTab = (event: Event) => {
+    if (intro.progress() < 1 || !visible) return;
+    const lane = (event as CustomEvent<string>).detail;
+    const chosen = lane === "all" ? ["0", "1", "2"] : [lane];
+    const burst = gsap.timeline();
+    chosen.forEach((id, n) => {
+      const source = drops[Number(id)];
+      if (!source) return;
+      const dx = Number(source.dataset.x) - 260;
+      for (let k = 0; k < 3; k++) {
+        const copy = source.cloneNode() as SVGElement;
+        source.after(copy);
+        burst.fromTo(
+          copy,
+          { opacity: 1, x: 0, y: 0 },
+          {
+            keyframes: [
+              { x: dx * 0.35, y: 26, duration: 0.2, ease: "power1.in" },
+              { x: dx, y: 62, duration: 0.26, ease: "power2.in" },
+              { opacity: 0, duration: 0.1 },
+            ],
+            onComplete: () => copy.remove(),
+          },
+          n * 0.1 + k * 0.16,
+        );
+      }
+      const laneTiles = tiles.filter((tile) => laneOf(tile) === id);
+      burst.fromTo(
+        laneTiles,
+        { scaleX: 0.3, opacity: 0.2, transformOrigin: "0% 50%" },
+        {
+          scaleX: 1,
+          opacity: 1,
+          duration: 0.42,
+          stagger: 0.07,
+          ease: "power3.out",
+          overwrite: "auto",
+        },
+        n * 0.1 + 0.4,
+      );
+    });
+  };
+  window.addEventListener("herotab", onTab);
 
   let visible = true;
   intro.eventCallback("onComplete", () => visible && idle.play());
@@ -185,7 +246,67 @@ function heroFigure(): Cleanup {
       }
     },
   });
-  return () => idle.kill();
+  return () => {
+    idle.kill();
+    window.removeEventListener("herotab", onTab);
+  };
+}
+
+// ── Hero layers follow the pointer, each by its depth (mouse and trackpad only) ──
+function heroParallax(): Cleanup {
+  const stage = document.querySelector<HTMLElement>("[data-hero-stage]");
+  const hero = stage?.closest<HTMLElement>("section");
+  if (!stage || !hero || !window.matchMedia("(pointer: fine)").matches) return () => {};
+  const layers = all("[data-depth]", stage).map((el) => ({
+    depth: Number(el.dataset.depth),
+    x: gsap.quickTo(el, "x", { duration: 0.9, ease: "power3" }),
+    y: gsap.quickTo(el, "y", { duration: 0.9, ease: "power3" }),
+  }));
+  const move = (event: PointerEvent) => {
+    const box = hero.getBoundingClientRect();
+    const px = (event.clientX - box.left) / box.width - 0.5;
+    const py = (event.clientY - box.top) / box.height - 0.5;
+    layers.forEach((layer) => {
+      layer.x(px * layer.depth * 40);
+      layer.y(py * layer.depth * 30);
+    });
+  };
+  const rest = () => layers.forEach((layer) => (layer.x(0), layer.y(0)));
+  hero.addEventListener("pointermove", move);
+  hero.addEventListener("pointerleave", rest);
+  return () => {
+    hero.removeEventListener("pointermove", move);
+    hero.removeEventListener("pointerleave", rest);
+  };
+}
+
+// ── Marquee: scrolling speeds the bands up, then they settle back ─────────────
+function marquee(): Cleanup {
+  const animations = all(".marquee-track").flatMap((track) => track.getAnimations());
+  if (animations.length === 0) return () => {};
+  const speed = { rate: 1 };
+  const apply = () => animations.forEach((animation) => (animation.playbackRate = speed.rate));
+  const settle = () =>
+    gsap.to(speed, { rate: 1, duration: 1.1, ease: "power2.out", onUpdate: apply });
+  const trigger = ScrollTrigger.create({
+    start: 0,
+    end: "max",
+    onUpdate: (self) => {
+      const boost = 1 + Math.min(Math.abs(self.getVelocity()) / 350, 6);
+      gsap.to(speed, {
+        rate: boost,
+        duration: 0.25,
+        overwrite: true,
+        onUpdate: apply,
+        onComplete: settle,
+      });
+    },
+  });
+  return () => {
+    trigger.kill();
+    speed.rate = 1;
+    apply();
+  };
 }
 
 // ── Section headlines: every letter drops in, nearly together, every arrival ──

@@ -25,6 +25,8 @@
 | `data-aliquot` | The hero figure's timeline and idle loop |
 
    Added in v2 (decision 018): `data-drop` (letters fall in, random order), `data-scramble` (labels decode), `data-delivery` (the phone sequence), the journey **track** (a tube travels while the section is pinned). Every entrance uses `toggleActions: "restart none restart none"`, so it **replays** whenever you come back. `ScrollTrigger.sort()` before `refresh()` keeps triggers in page order when a pin adds scroll space.
+   Hero layers (session 13): floating cards carry `data-depth` and follow the pointer (`gsap.quickTo`, a cheap "chase this value" tween); each tab change dispatches a `herotab` event and the figure sends a burst of drops into that lane. The marquee is plain CSS; scrolling raises its `playbackRate` through the Web Animations API (`element.getAnimations()`), then it eases back.
+   **Refresh starts at the top:** `landingScrollBootScript` (in `<head>`) sets `history.scrollRestoration = "manual"` on the landing page and, on a reload, drops any `#section` from the address. A fresh visit to a shared `/#safety` link still goes there.
 5. **Cleanup:** everything is created inside a `gsap.context`, so "Pause motion" (or leaving the page) reverts it in one call.
 
 ## Why it doesn't lag
