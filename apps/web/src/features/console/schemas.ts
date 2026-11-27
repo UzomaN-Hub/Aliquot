@@ -52,6 +52,31 @@ export const createLabResponseSchema = z.object({
 });
 export type CreateLabResult = z.infer<typeof createLabResponseSchema>;
 
+// ── Platform team (decision 019) ──
+export const teamMemberSchema = z.object({
+  id: z.uuid(),
+  full_name: z.string(),
+  email: z.string(),
+  status: z.enum(["invited", "active", "deactivated"]),
+  two_factor: z.boolean(),
+  last_login_at: z.string().nullable(),
+  created_at: z.string(),
+  invited_by_name: z.string().nullable(),
+  deactivated_at: z.string().nullable(),
+  invite_expires_at: z.string().nullable(),
+});
+export type TeamMember = z.infer<typeof teamMemberSchema>;
+
+export const inviteAdminResponseSchema = z.object({
+  admin: teamMemberSchema,
+  invite_url: z.string().nullable(),
+});
+export type InviteAdminResult = z.infer<typeof inviteAdminResponseSchema>;
+
+export const inviteLinkSchema = z.object({ invite_url: z.string().nullable() });
+
+export const inviteInfoSchema = z.object({ full_name: z.string(), email: z.string() });
+
 // ── Forms ─────────────────────────────────────────────────────────────────
 export const consoleSignInSchema = z.object({
   email: z
@@ -133,3 +158,16 @@ export function suggestSlug(name: string): string {
     .slice(0, 40)
     .replace(/-+$/g, "");
 }
+
+export const inviteAdminSchema = z.object({
+  full_name: z.string().trim().min(1, "Enter their full name.").max(200),
+  email: z
+    .string()
+    .trim()
+    .min(1, "Enter their email.")
+    .pipe(z.email("Enter an email address like name@example.com.")),
+});
+export type InviteAdminValues = z.infer<typeof inviteAdminSchema>;
+
+/** Super-admins hold the keys to every lab: 16 characters, as the CLI asks. */
+export const CONSOLE_MIN_PASSWORD = 16;

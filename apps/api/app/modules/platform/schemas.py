@@ -102,3 +102,50 @@ class UpdateLabRequest(BaseModel):
 
 class StatusChangeRequest(BaseModel):
     reason: str = Field(min_length=3, max_length=500, description="Kept in the audit log.")
+
+
+# ── Platform team (decision 019) ─────────────────────────────────────────
+AdminStatusName = Literal["invited", "active", "deactivated"]
+EMAIL_PATTERN = r"^[^@\s]+@[^@\s]+\.[^@\s]+$"
+
+
+class TeamMemberResponse(BaseModel):
+    id: UUID
+    full_name: str
+    email: str
+    status: AdminStatusName
+    two_factor: bool = Field(description="2FA is set up.")
+    last_login_at: datetime | None
+    created_at: datetime
+    invited_by_name: str | None = Field(description="Null for admins created from the CLI.")
+    deactivated_at: datetime | None
+    invite_expires_at: datetime | None = Field(
+        description="When the open invite link expires; null if none is open."
+    )
+
+
+class InviteAdminRequest(BaseModel):
+    full_name: str = Field(min_length=1, max_length=200)
+    email: str = Field(min_length=3, max_length=254, pattern=EMAIL_PATTERN)
+
+
+class InviteAdminResponse(BaseModel):
+    admin: TeamMemberResponse
+    invite_url: str | None = Field(description="Shown once; null on a replayed request.")
+
+
+class InviteLinkResponse(BaseModel):
+    invite_url: str | None = Field(description="Shown once; null on a replayed request.")
+
+
+class InviteTokenRequest(BaseModel):
+    token: str = Field(min_length=20, max_length=200)
+
+
+class InviteInfoResponse(BaseModel):
+    full_name: str
+    email: str
+
+
+class AcceptInviteRequest(InviteTokenRequest):
+    password: str = Field(min_length=1, max_length=1024)

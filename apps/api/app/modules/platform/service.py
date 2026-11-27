@@ -32,20 +32,26 @@ from app.core.platform_security import (
     totp_provisioning,
     verify_totp,
 )
-from app.core.security import hash_token, new_refresh_token, verify_password
+from app.core.security import hash_password, hash_token, new_refresh_token, verify_password
 from app.modules.audit import service as audit
 from app.modules.audit.models import ActorType
 from app.modules.auth import service as auth
 from app.modules.auth.service import ClientInfo
 from app.modules.platform import repository
-from app.modules.platform.models import PlatformAdmin, PlatformSession
+from app.modules.platform.models import PlatformAdmin, PlatformInvite, PlatformSession
 from app.modules.platform.schemas import (
     AdminResponse,
+    AdminStatusName,
     CreateLabRequest,
     CreateLabResponse,
+    InviteAdminRequest,
+    InviteAdminResponse,
+    InviteInfoResponse,
+    InviteLinkResponse,
     LabDetailResponse,
     PlatformSessionResponse,
     SignInStepResponse,
+    TeamMemberResponse,
     TotpSetup,
 )
 from app.modules.staff import service as staff
@@ -54,6 +60,8 @@ from app.modules.tenants.service import LabDetail, LabSummary, NewLab
 
 MAX_CODE_ATTEMPTS = 5
 LOCK_MINUTES = 15
+INVITE_HOURS = 72
+MIN_PASSWORD_LENGTH = 16  # super-admins hold the keys to every lab (as the CLI)
 
 
 # ── Errors ────────────────────────────────────────────────────────────────
@@ -288,6 +296,17 @@ async def sign_out(refresh_token: str | None, client: ClientInfo) -> None:
         )
 
 
+async def require_live_session(claims: PlatformClaims) -> None:
+    """A console token is honoured only while its admin is active and its session is
+    live, so deactivating someone (or signing out everywhere) takes effect at once,
+    not when their 15-minute token runs out."""
+    async with platform_transaction() as session:
+        admin = await repository.get_admin(session, claims.admin_id)
+        live = await repository.get_live_session(session, claims.session_id)
+    if admin is None or not admin.active or live is None or live.admin_id != admin.id:
+        raise session_ended()
+
+
 async def get_me(claims: PlatformClaims) -> AdminResponse:
     async with platform_transaction() as session:
         admin = await repository.get_admin(session, claims.admin_id)
@@ -481,4 +500,311 @@ async def change_status(
             key,
             request_hash([str(lab_id), suspend, reason]),
             action,
+        )
+
+
+# ── Platform team (decision 019) ─────────────────────────────────────────
+# Super-admins invite, deactivate and reset each other. Two rules keep the platform
+# reachable: nobody acts on themselves here (My account is for that), and the last
+# active super-admin can't be deactivated. The CLI stays the break-glass way in.
+def admin_not_found() -> AppError:
+    return AppError(404, "admin_not_found", "That super-admin doesn't exist.")
+
+
+def not_on_yourself() -> AppError:
+    return AppError(
+        409, "not_on_yourself", "You can't do this to your own account. Ask another super-admin."
+    )
+
+
+def invite_invalid() -> AppError:
+    return AppError(
+        400,
+        "link_invalid",
+        "This link has expired or was already used. Ask a super-admin for a new one.",
+    )
+
+
+def _status(admin: PlatformAdmin) -> AdminStatusName:
+    if not admin.active:
+        return "deactivated"
+    return "invited" if admin.password_hash is None else "active"
+
+
+def _member(
+    admin: PlatformAdmin, inviter: str | None, invite_expires: datetime | None
+) -> TeamMemberResponse:
+    return TeamMemberResponse(
+        id=admin.id,
+        full_name=admin.full_name,
+        email=admin.email,
+        status=_status(admin),
+        two_factor=admin.totp_secret_enc is not None,
+        last_login_at=admin.last_login_at,
+        created_at=admin.created_at,
+        invited_by_name=inviter,
+        deactivated_at=admin.deactivated_at,
+        invite_expires_at=invite_expires if admin.active and admin.password_hash is None else None,
+    )
+
+
+async def _load_member(session: AsyncSession, admin_id: UUID) -> TeamMemberResponse:
+    rows = await repository.list_admins_with_inviter(session, admin_id)
+    if not rows:
+        raise admin_not_found()
+    return _member(*rows[0])
+
+
+def invite_link(token: str) -> str:
+    # In the #fragment, never sent to a server (decision 015).
+    return f"{get_settings().public_web_url}/console/accept-invite#token={token}"
+
+
+async def _new_invite(session: AsyncSession, admin_id: UUID, created_by: UUID) -> str:
+    token, token_hash = new_refresh_token()  # 256 random bits, stored hashed
+    await repository.add_invite(
+        session,
+        PlatformInvite(
+            id=uuid7(),
+            admin_id=admin_id,
+            created_by=created_by,
+            token_hash=token_hash,
+            expires_at=datetime.now(UTC) + timedelta(hours=INVITE_HOURS),
+        ),
+    )
+    return invite_link(token)
+
+
+async def list_team() -> list[TeamMemberResponse]:
+    async with platform_transaction() as session:
+        return [_member(*row) for row in await repository.list_admins_with_inviter(session)]
+
+
+async def get_team_member(admin_id: UUID) -> TeamMemberResponse:
+    async with platform_transaction() as session:
+        return await _load_member(session, admin_id)
+
+
+async def invite_admin(
+    claims: PlatformClaims, body: InviteAdminRequest, key: str | None, client: ClientInfo
+) -> InviteAdminResponse | dict[str, Any]:
+    email = staff.normalise_email(body.email)
+
+    async def action() -> tuple[InviteAdminResponse, dict[str, Any]]:
+        if await repository.get_admin_by_email(session, email) is not None:
+            raise AppError(
+                409, "email_taken", "A super-admin with that email already exists.", "email"
+            )
+        admin = await repository.add_admin(
+            session,
+            PlatformAdmin(
+                id=uuid7(),
+                email=email,
+                full_name=body.full_name.strip(),
+                password_hash=None,
+                invited_by=claims.admin_id,
+            ),
+        )
+        url = await _new_invite(session, admin.id, claims.admin_id)
+        await audit.record(
+            session,
+            lab_id=None,
+            actor_type=ActorType.PLATFORM_ADMIN,
+            actor_id=claims.admin_id,
+            action="platform.admin_invited",
+            entity="platform_admin",
+            entity_id=admin.id,
+            after={"email": email, "full_name": admin.full_name},
+            ip=client.ip,
+        )
+        response = InviteAdminResponse(admin=await _load_member(session, admin.id), invite_url=url)
+        # The stored replay leaves the link out: the raw token exists only once.
+        stored = response.model_copy(update={"invite_url": None}).model_dump(mode="json")
+        return response, stored
+
+    async with platform_transaction() as session:
+        try:
+            return await _idempotent(
+                session,
+                claims.admin_id,
+                key,
+                request_hash(["invite", email, body.full_name.strip()]),
+                action,
+            )
+        except IntegrityError as error:  # two invites for the same email at once
+            raise AppError(
+                409, "email_taken", "A super-admin with that email already exists.", "email"
+            ) from error
+
+
+async def resend_invite(
+    claims: PlatformClaims, admin_id: UUID, key: str | None, client: ClientInfo
+) -> InviteLinkResponse | dict[str, Any]:
+    """A fresh link for someone who hasn't accepted yet; the old link stops working."""
+
+    async def action() -> tuple[InviteLinkResponse, dict[str, Any]]:
+        admin = await repository.get_admin(session, admin_id, lock=True)
+        if admin is None:
+            raise admin_not_found()
+        if _status(admin) != "invited":
+            raise AppError(
+                409, "not_invited", "Only someone still waiting on their invite gets a new link."
+            )
+        await repository.revoke_open_invites(session, admin.id, datetime.now(UTC))
+        url = await _new_invite(session, admin.id, claims.admin_id)
+        await audit.record(
+            session,
+            lab_id=None,
+            actor_type=ActorType.PLATFORM_ADMIN,
+            actor_id=claims.admin_id,
+            action="platform.admin_invite_resent",
+            entity="platform_admin",
+            entity_id=admin.id,
+            ip=client.ip,
+        )
+        return InviteLinkResponse(invite_url=url), {"invite_url": None}
+
+    async with platform_transaction() as session:
+        return await _idempotent(
+            session, claims.admin_id, key, request_hash(["resend", str(admin_id)]), action
+        )
+
+
+async def set_admin_active(
+    claims: PlatformClaims,
+    admin_id: UUID,
+    active: bool,
+    reason: str,
+    key: str | None,
+    client: ClientInfo,
+) -> TeamMemberResponse | dict[str, Any]:
+    """Deactivate: their sessions and any open invite end at once; nothing is deleted.
+    Reactivate: they can sign in again with their own password and 2FA."""
+    if admin_id == claims.admin_id:
+        raise not_on_yourself()
+
+    async def action() -> tuple[TeamMemberResponse, dict[str, Any]]:
+        now = datetime.now(UTC)
+        signers = await repository.lock_active_admins(session)
+        admin = await repository.get_admin(session, admin_id, lock=True)
+        if admin is None:
+            raise admin_not_found()
+        if admin.active != active:
+            if not active:
+                if [a.id for a in signers] == [admin.id]:  # pragma: no cover: you're active too
+                    raise AppError(409, "last_admin", "The last active super-admin stays active.")
+                admin.active = False
+                admin.deactivated_at = now
+                await repository.revoke_admin_sessions(session, admin.id, now)
+                await repository.revoke_open_invites(session, admin.id, now)
+            else:
+                admin.active = True
+                admin.deactivated_at = None
+            await audit.record(
+                session,
+                lab_id=None,
+                actor_type=ActorType.PLATFORM_ADMIN,
+                actor_id=claims.admin_id,
+                action="platform.admin_reactivated" if active else "platform.admin_deactivated",
+                entity="platform_admin",
+                entity_id=admin.id,
+                after={"reason": reason.strip()},
+                ip=client.ip,
+            )
+        response = await _load_member(session, admin.id)
+        return response, response.model_dump(mode="json")
+
+    async with platform_transaction() as session:
+        return await _idempotent(
+            session,
+            claims.admin_id,
+            key,
+            request_hash(["active", str(admin_id), active, reason]),
+            action,
+        )
+
+
+async def reset_admin_2fa(
+    claims: PlatformClaims, admin_id: UUID, reason: str, key: str | None, client: ClientInfo
+) -> TeamMemberResponse | dict[str, Any]:
+    """For a lost phone: their 2FA is cleared and their sessions end. Their next sign-in
+    asks for their password, then shows a new QR code. Never on yourself."""
+    if admin_id == claims.admin_id:
+        raise not_on_yourself()
+
+    async def action() -> tuple[TeamMemberResponse, dict[str, Any]]:
+        now = datetime.now(UTC)
+        admin = await repository.get_admin(session, admin_id, lock=True)
+        if admin is None:
+            raise admin_not_found()
+        if _status(admin) != "active":
+            raise AppError(409, "not_active", "Only an active super-admin's 2FA can be reset.")
+        admin.totp_secret_enc = None
+        admin.totp_last_step = None
+        admin.totp_failed_attempts = 0
+        admin.totp_locked_until = None
+        await repository.revoke_admin_sessions(session, admin.id, now)
+        await audit.record(
+            session,
+            lab_id=None,
+            actor_type=ActorType.PLATFORM_ADMIN,
+            actor_id=claims.admin_id,
+            action="platform.admin_2fa_reset",
+            entity="platform_admin",
+            entity_id=admin.id,
+            after={"reason": reason.strip()},
+            ip=client.ip,
+        )
+        response = await _load_member(session, admin.id)
+        return response, response.model_dump(mode="json")
+
+    async with platform_transaction() as session:
+        return await _idempotent(
+            session, claims.admin_id, key, request_hash(["reset2fa", str(admin_id), reason]), action
+        )
+
+
+# ── Accepting an invite (public: the link is the proof) ──────────────────
+async def _usable_invite(session: AsyncSession, token: str) -> tuple[PlatformInvite, PlatformAdmin]:
+    invite = await repository.get_invite_by_hash(session, hash_token(token))
+    now = datetime.now(UTC)
+    if invite is None or invite.used_at or invite.revoked_at or invite.expires_at <= now:
+        raise invite_invalid()
+    admin = await repository.get_admin(session, invite.admin_id, lock=True)
+    if admin is None or _status(admin) != "invited":
+        raise invite_invalid()
+    return invite, admin
+
+
+async def check_invite(token: str) -> InviteInfoResponse:
+    async with platform_transaction() as session:
+        _, admin = await _usable_invite(session, token)
+        return InviteInfoResponse(full_name=admin.full_name, email=admin.email)
+
+
+async def accept_invite(token: str, password: str, client: ClientInfo) -> None:
+    if len(password) < MIN_PASSWORD_LENGTH:
+        raise AppError(
+            422,
+            "password_too_short",
+            f"Use at least {MIN_PASSWORD_LENGTH} characters. A short sentence works well.",
+            "password",
+        )
+    async with platform_transaction() as session:
+        invite, admin = await _usable_invite(session, token)
+        if password.strip().lower() == admin.email:
+            raise AppError(
+                422, "password_is_email", "Choose a password that isn't your email.", "password"
+            )
+        admin.password_hash = hash_password(password)
+        invite.used_at = datetime.now(UTC)
+        await audit.record(
+            session,
+            lab_id=None,
+            actor_type=ActorType.PLATFORM_ADMIN,
+            actor_id=admin.id,
+            action="platform.admin_invite_accepted",
+            entity="platform_admin",
+            entity_id=admin.id,
+            ip=client.ip,
         )
