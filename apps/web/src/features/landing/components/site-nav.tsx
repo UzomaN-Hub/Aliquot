@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Wordmark } from "@/components/patterns/wordmark";
 import { cn } from "@/lib/cn";
 
+import { useToneUnder } from "../use-tone-under";
 import { CtaPill } from "./cta-pill";
 
 const LINKS = [
@@ -17,7 +18,8 @@ const LINKS = [
 
 /**
  * Landing navigation. Prussian in light mode, graphite in dark (data-tone="bar",
- * decision 021), while the page stays Bone (decision 018). Phones get a round menu button that
+ * decision 021), while the page stays Bone (decision 018). Over a dark block (the
+ * disciplines section, the closing band, the footer) it turns graphite too. Phones get a round menu button that
  * opens the links full screen.
  */
 export function SiteNav({
@@ -29,6 +31,8 @@ export function SiteNav({
 }) {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const headerRef = useRef<HTMLElement>(null);
+  const tone = useToneUnder(headerRef, "bottom");
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -46,9 +50,10 @@ export function SiteNav({
 
   return (
     <header
-      data-tone="bar"
+      ref={headerRef}
+      data-tone={tone}
       className={cn(
-        "fixed inset-x-0 top-0 z-40 bg-surface text-ink [[data-theme=dark]_&]:bg-surface/90 [[data-theme=dark]_&]:backdrop-blur-md transition-[border-color] duration-300",
+        "fixed inset-x-0 top-0 z-40 bg-surface text-ink transition-[border-color,background-color] duration-300 [[data-theme=dark]_&]:bg-surface/90 [[data-theme=dark]_&]:backdrop-blur-md",
         scrolled ? "border-b border-hairline" : "border-b border-transparent",
       )}
     >

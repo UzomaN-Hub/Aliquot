@@ -13,7 +13,7 @@ Haematoxylin & Eosin (H&E), the classic pathology stain. Calm and editorial: the
 
 - **Eosin** `#E0566F` (text-safe `#B23B56` light, `#EB8A9A` dark): attention only. Critical results, STAT, one accent per page, under 5% of any screen.
 - **Tints, not new colours:** secondary and muted text are warm greys mixed from the text colour. The selected row is a Prussian tint (`#E3E8EE` / `#2C3138`). Hairlines are warm (`#E4DFD3` / `#3A3936`). Raised panels (sign-in form, menus) are `#FBF9F4` / `#262523`.
-- **The page background is always Bone, in both modes (decision 018).** Dark mode darkens the furniture, not the room: only the top bar and containers marked `data-surface` (nav bars, panels, cards, menus, dialogs) turn graphite. `data-tone="dark"` makes a block graphite in either mode (landing dark sections, footer). `data-tone="bar"` is Prussian in light mode and graphite in dark (landing nav and section bar, decision 021). The main colour only fills small elements and bars, never a whole page.
+- **The page background is always Bone, in both modes (decision 018).** Dark mode darkens the furniture, not the room: only the top bar and containers marked `data-surface` (nav bars, panels, cards, menus, dialogs) turn graphite. `data-tone="dark"` makes a block graphite in either mode (landing dark sections, footer). `data-tone="bar"` is Prussian in light mode and graphite in dark (landing nav and section bar, decision 021); over a full-width dark block (`data-nav-tone="dark"`) both bars turn graphite. The main colour only fills small elements and bars, never a whole page.
 - **Dialogs blur the page behind them**, so the decision in front is the only thing in focus.
 - **Theme:** Auto (default) is dark from 19:00 and light from 08:00 by the device clock. **Light** and **Dark** override it and are remembered on the device. The control is on sign-in pages and in the app menu. The operating system's dark mode does not decide it.
 
@@ -33,7 +33,7 @@ Headline setting (landing and lab wordmark): large Instrument Serif with tight l
 ## Rules
 1. **One primary action per screen.** Only filled main-colour (Prussian) button. Everything else is a text link or appears on demand (e.g. row actions on selection).
 2. **Two button styles:**
-   - Marketing: full pill, Prussian fill, Bone text (landing only; revisited at the landing stage). The landing's big action pill is Prussian in light mode and turns ink on hover (decision 021).
+   - Marketing: full pill, Prussian fill, Bone text (landing only; revisited at the landing stage). The landing's big action pill is Prussian, then graphite on hover, in light mode; graphite, then Prussian, in dark mode; white inside the nav, turning to whichever colour contrasts with the bar (decision 021).
    - Sign-in style pages: the big pill (`size="xl"`, 60px, full width, arrow tile), Prussian, ink on hover (decision 020).
    - In-app: 2px radius, Prussian fill.
    - Secondary actions: underlined text link, never a second boxed button.

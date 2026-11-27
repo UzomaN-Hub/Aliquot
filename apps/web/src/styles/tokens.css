@@ -37,10 +37,10 @@
   --overlay-shadow: rgb(31 30 28 / 0.14);
   --scrim: rgb(31 30 28 / 0.28);
   --veil: rgb(246 243 236 / 0.62); /* over the sign-in backdrop */
-  /* The landing's big action pill (decision 021): Prussian at rest, ink on hover. */
+  /* The landing's big action pill (decision 021): Prussian at rest, graphite on hover. */
   --cta: #1b3a5c;
   --on-cta: #f6f3ec;
-  --cta-hover: #1f1e1c;
+  --cta-hover: #1e1e1c;
   --on-cta-hover: #f6f3ec;
   --stain-film-opacity: 1;
 
@@ -58,8 +58,8 @@
   --bar: #262523;
   --on-bar: #f2efe8;
   --on-bar-muted: #a8a49c;
-  /* Dark mode keeps the pill as it was: ink at rest, Prussian on hover. */
-  --cta: #1f1e1c;
+  /* Dark mode: graphite at rest, Prussian on hover. */
+  --cta: #1e1e1c;
   --cta-hover: #1b3a5c;
 }
 
@@ -82,10 +82,11 @@
   --eosin: #e0566f;
   --eosin-text: #eb8a9a; /* 4.7:1 */
   --overlay-shadow: rgb(16 34 54 / 0.35);
-  /* On Prussian the pill turns Bone, then ink on hover, so it never disappears. */
+  /* On the Prussian nav the pill is white, then graphite on hover, so it never
+     disappears into the bar. */
   --cta: #f6f3ec;
   --on-cta: #1b3a5c;
-  --cta-hover: #1f1e1c;
+  --cta-hover: #1e1e1c;
   --on-cta-hover: #f6f3ec;
 }
 
@@ -115,9 +116,10 @@
   --scrim: rgb(0 0 0 / 0.4);
   --veil: rgb(30 30 28 / 0.6);
   --stain-film-opacity: 0.28;
-  /* The pill on graphite: light at rest, softened Prussian on hover (as before). */
+  /* The pill on graphite (the nav in dark mode or over a dark block): white at rest,
+     Prussian on hover. */
   --cta: #f2efe8;
   --on-cta: #1e1e1c;
-  --cta-hover: #a9bcd0;
-  --on-cta-hover: #1e1e1c;
+  --cta-hover: #1b3a5c;
+  --on-cta-hover: #f6f3ec;
 }

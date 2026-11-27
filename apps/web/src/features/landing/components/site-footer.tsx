@@ -60,6 +60,7 @@ export function SiteFooter({
   return (
     <footer
       data-tone="dark"
+      data-nav-tone="dark"
       className="overflow-hidden bg-surface px-6 pt-24 pb-28 text-ink sm:px-12 lg:pb-12"
     >
       <div className="mx-auto flex max-w-[1520px] flex-col gap-20">
