@@ -13,7 +13,8 @@ Haematoxylin & Eosin (H&E), the classic pathology stain. Calm and editorial: the
 
 - **Eosin** `#E0566F` (text-safe `#B23B56` light, `#EB8A9A` dark): attention only. Critical results, STAT, one accent per page, under 5% of any screen.
 - **Tints, not new colours:** secondary and muted text are warm greys mixed from the text colour. The selected row is a Prussian tint (`#E3E8EE` / `#2C3138`). Hairlines are warm (`#E4DFD3` / `#3A3936`). Raised panels (sign-in form, menus) are `#FBF9F4` / `#262523`.
-- **The page background is always Bone or graphite.** The main colour only fills small elements (the top bar, buttons, selected states), never a whole page.
+- **The page background is always Bone, in both modes (decision 018).** Dark mode darkens the furniture, not the room: only the top bar and containers marked `data-surface` (nav bars, panels, cards, menus, dialogs) turn graphite. `data-tone="dark"` makes a block graphite in either mode (landing dark sections, footer, section bar). The main colour only fills small elements, never a whole page.
+- **Dialogs blur the page behind them**, so the decision in front is the only thing in focus.
 - **Theme:** Auto (default) is dark from 19:00 and light from 08:00 by the device clock. **Light** and **Dark** override it and are remembered on the device. The control is on sign-in pages and in the app menu. The operating system's dark mode does not decide it.
 
 **Contrast (decision 008, re-checked in 014):** all text meets WCAG AA 4.5:1 on its background, including selected and hover rows. The smallest text colour is **muted**. **Faint is never used for text**, only for field edges and underlines, where it meets the 3:1 rule for non-text marks. Plain Eosin is for fills and borders; Eosin *text* uses the text-safe value. Exact values live only in `apps/web/src/styles/tokens.css`.
@@ -37,7 +38,7 @@ Headline setting (landing and lab wordmark): large Instrument Serif with tight l
    - Secondary actions: underlined text link, never a second boxed button.
 3. **Shape follows importance, near-square (decision 009):** controls (buttons, fields, result cells) 2px · modals, menus and working panels 4px · landing hero panels 28px (revisited at the landing stage) · table rows square with hairline dividers, never card-per-row. The selected nav item has no filled block: ink colour, semibold and a 2px Haematoxylin bar on its left edge.
    - **Avoid the generic look.** For every component, name the usual AI/shadcn default (10px soft rectangles, lavender pill highlights, shimmer skeletons, spinner buttons) and don't use it.
-4. **No badges, pills or eyebrow tags as decoration.** Status (CH, CL, H, L, STAT) is shown as coloured text, not chips, unless a badge is functionally necessary.
+4. **No badges, pills or eyebrow tags as decoration.** (Landing exception, decision 018: section header rows (number + label + tagline) and the "Coming soon" tag are functional navigation and status.) Status (CH, CL, H, L, STAT) is shown as coloured text, not chips, unless a badge is functionally necessary.
 5. **Hierarchy through type, not boxes.** Small muted label above a large figure replaces cards and borders.
 6. **No gradients, shadows (except menus/dialogs), stock illustrations, emoji, or decorative icons.**
 7. **Navigation is role-based, in a top bar, never a sidebar (decision 014).** The Prussian top bar holds the lab's name on the left, the 3–6 places this role uses most, and on the right the person's name with a menu (nine-dot button). The menu lists everything else they can do, the theme control and Sign out. Work is laid out across the page by importance, not stacked in a side column.

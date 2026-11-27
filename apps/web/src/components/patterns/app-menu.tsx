@@ -56,6 +56,7 @@ export function AppMenu({
 
       <DropdownMenu.Portal>
         <DropdownMenu.Content
+          data-surface
           align="end"
           sideOffset={8}
           className="z-50 w-80 rounded-panel border border-hairline bg-surface-raised p-2 text-ink shadow-overlay"

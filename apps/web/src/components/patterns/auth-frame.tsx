@@ -26,7 +26,10 @@ export function AuthFrame({
         <ThemeToggle />
       </header>
       <main className="flex flex-1 items-center justify-center px-4 py-12">
-        <div className="w-full max-w-[460px] rounded-panel border border-hairline bg-surface-raised px-7 py-12 shadow-overlay sm:px-12 sm:py-14">
+        <div
+          data-surface
+          className="w-full max-w-[460px] rounded-panel border border-hairline bg-surface-raised px-7 py-12 shadow-overlay sm:px-12 sm:py-14"
+        >
           {children}
         </div>
       </main>

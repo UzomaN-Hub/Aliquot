@@ -19,6 +19,7 @@
   --color-hover: var(--hover);
   --color-hairline: var(--hairline);
   --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
   --color-on-primary: var(--on-primary);
   --color-bar: var(--bar);
   --color-on-bar: var(--on-bar);
@@ -53,10 +54,12 @@
   --text-hero: 56px;
   --text-hero--line-height: 56px;
   /* Landing only (decision 017): fluid sizes from phone to wide screen. */
-  --text-headline: clamp(2.25rem, 1.4rem + 3.4vw, 4.25rem);
-  --text-headline--line-height: 1;
-  --text-mega: clamp(3rem, 1.2rem + 7vw, 7rem);
-  --text-mega--line-height: 0.94;
+  --text-lead: clamp(1.125rem, 0.95rem + 0.55vw, 1.4rem);
+  --text-lead--line-height: 1.55;
+  --text-headline: clamp(2.75rem, 1.3rem + 4.8vw, 6.25rem);
+  --text-headline--line-height: 0.98;
+  --text-mega: clamp(3.4rem, 1.1rem + 8vw, 8.25rem);
+  --text-mega--line-height: 0.92;
 
   /* Weights 400–600 only. */
   --font-weight-*: initial;
@@ -92,12 +95,19 @@
 
 @layer base {
   html {
-    background-color: var(--color-surface);
-    color: var(--color-ink);
+    background-color: var(--surface);
+    color: var(--ink);
     font-family: var(--font-sans);
     font-size: var(--text-body);
     line-height: var(--text-body--line-height);
     -webkit-font-smoothing: antialiased;
+  }
+
+  /* A surface or toned block always uses ITS text colour, not the page's it sits on
+     (decision 018: in dark mode a graphite card on the Bone page has light text). */
+  [data-surface],
+  [data-tone] {
+    color: var(--ink);
   }
 
   /* Result values, lab numbers, units, timers line up in columns. */
@@ -107,7 +117,7 @@
 
   /* Visible focus: 2px primary ring, 2px offset (softened Prussian in dark mode). */
   :focus-visible {
-    outline: 2px solid var(--color-primary);
+    outline: 2px solid var(--primary);
     outline-offset: 2px;
   }
 
@@ -191,6 +201,80 @@
     to {
       transform: translateY(200%);
     }
+  }
+
+  /* Hero showcase: the active tab lights its lane; the others step back. */
+  [data-active-lane="0"] [data-lane-group]:not([data-lane-group="0"]),
+  [data-active-lane="1"] [data-lane-group]:not([data-lane-group="1"]),
+  [data-active-lane="2"] [data-lane-group]:not([data-lane-group="2"]) {
+    opacity: 0.22;
+  }
+  .hero-progress {
+    width: 0;
+    animation: hero-progress linear forwards;
+  }
+  @keyframes hero-progress {
+    to {
+      width: 100%;
+    }
+  }
+
+  /* Journey track: stations light up as the sample passes them. */
+  [data-station] .station,
+  [data-station] .station-label {
+    transition:
+      fill 300ms ease-out,
+      stroke 300ms ease-out;
+  }
+  [data-station][data-on="true"] .station {
+    fill: var(--primary);
+    stroke: var(--primary);
+  }
+  [data-station][data-on="true"] .station-label {
+    fill: var(--ink);
+  }
+
+  /* Outlined display words (switchers, background letters): the type's own outline. */
+  .text-outline {
+    color: transparent;
+    -webkit-text-stroke: 1px var(--ink-faint);
+  }
+  .group:hover .text-outline {
+    -webkit-text-stroke-color: var(--ink);
+  }
+
+  /* A panel whose content changes (switchers, hero captions) eases in. */
+  .switcher-panel {
+    animation: panel-in 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  @keyframes panel-in {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+  }
+
+  /* Marquee band: two copies slide left forever; hover pauses it. */
+  .marquee-track {
+    display: flex;
+    width: max-content;
+    animation: marquee 38s linear infinite;
+  }
+  .marquee:hover .marquee-track {
+    animation-play-state: paused;
+  }
+  @keyframes marquee {
+    to {
+      transform: translateX(-50%);
+    }
+  }
+  html:not(.motion-on) .marquee-track,
+  html:not(.motion-on) .hero-progress,
+  html:not(.motion-on) .switcher-panel {
+    animation: none;
+  }
+  html:not(.motion-on) .hero-progress {
+    width: 100%;
   }
 
   /* Hover accordion: height animates through grid rows (0fr → 1fr), no measuring. */

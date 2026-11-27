@@ -19,11 +19,12 @@
 | `data-split="words"` | Lines rise out of masks (paragraphs) |
 | `data-reveal="fade"` | Rises softly, in batches |
 | `data-count="15"` | Counts up from 0 |
-| `data-morph` | Rounded inset frame opens to full width, closes on exit |
+| `data-morph` | Full-bleed on arrival; rounds and insets only as you leave |
 | `data-journey` | Pinned on desktop; scroll walks the steps |
-| `data-critical` | The critical-value demo plays once |
+| `data-critical` | The critical-value demo replays each time you arrive |
 | `data-aliquot` | The hero figure's timeline and idle loop |
 
+   Added in v2 (decision 018): `data-drop` (letters fall in, random order), `data-scramble` (labels decode), `data-delivery` (the phone sequence), the journey **track** (a tube travels while the section is pinned). Every entrance uses `toggleActions: "restart none restart none"`, so it **replays** whenever you come back. `ScrollTrigger.sort()` before `refresh()` keeps triggers in page order when a pin adds scroll space.
 5. **Cleanup:** everything is created inside a `gsap.context`, so "Pause motion" (or leaving the page) reverts it in one call.
 
 ## Why it doesn't lag

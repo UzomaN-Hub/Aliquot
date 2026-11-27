@@ -25,8 +25,11 @@ export function Modal({
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-40 bg-scrim" />
-        <Dialog.Content className="fixed top-1/2 left-1/2 z-50 max-h-[90dvh] w-[min(92vw,500px)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-panel border border-hairline bg-surface-raised p-8 text-ink shadow-overlay">
+        {/* The page behind blurs, so the decision in front is the only thing in focus. */}
+        <Dialog.Content
+          data-surface
+          className="fixed top-1/2 left-1/2 z-50 max-h-[90dvh] w-[min(92vw,500px)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-panel border border-hairline bg-surface-raised p-8 text-ink shadow-overlay"
+        >
           <Dialog.Title className="text-title font-medium">{title}</Dialog.Title>
           <Dialog.Description asChild>
             <div className="mt-2 text-body-lg text-ink-secondary">{description}</div>

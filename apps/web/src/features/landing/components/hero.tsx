@@ -1,88 +1,91 @@
 import { Fragment, type CSSProperties } from "react";
 
-import { Button } from "@/components/ui/button";
+import { CtaPill } from "./cta-pill";
+import { HeroShowcase } from "./hero-showcase";
 
-import { AliquotFigure } from "./aliquot-figure";
+const LINE_ONE = ["Every", "sample,"];
+const LINE_TWO = ["accounted", "for"];
 
-const HEADLINE = "Every sample, accounted for";
+function Words({ words, offset, last }: { words: string[]; offset: number; last?: boolean }) {
+  return words.map((word, i) => (
+    // The space sits BETWEEN the masks: inside an inline-block a trailing space is dropped.
+    <Fragment key={word}>
+      <span className="hero-mask">
+        <span className="hero-word" style={{ "--i": offset + i } as CSSProperties}>
+          {word}
+          {last && i === words.length - 1 && <span className="hero-dot text-eosin">.</span>}
+        </span>
+      </span>
+      {i < words.length - 1 && " "}
+    </Fragment>
+  ));
+}
 
 /**
- * Hero (ANIMATION.md, decision 017): the whole first screen. The headline rises word
- * by word and ends with Aliquot's Eosin full stop. Its motion is plain CSS that starts
- * on the first frame (it's the largest thing on screen, so it must never wait for
- * JavaScript). Beside it, the aliquot figure (GSAP) builds stacks of verified results.
+ * Hero (decisions 017, 018): the whole first screen. Two-tone headline rising word by
+ * word in plain CSS (it's the largest paint, so it never waits for a script), the
+ * action pill, a figure that proves the scope, and the aliquot showcase beside it.
  */
-export function Hero({ demoHref }: { demoHref: string }) {
-  const words = HEADLINE.split(" ");
-
+export function Hero({ demoProps }: { demoProps: React.ComponentProps<"a"> }) {
   return (
     <section
       aria-labelledby="hero-title"
-      className="relative flex min-h-dvh flex-col justify-center px-6 pt-28 pb-16 sm:px-10 lg:pt-24"
+      className="relative flex min-h-dvh flex-col justify-center px-6 pt-32 pb-16 sm:px-12 lg:pt-28"
     >
-      <div className="mx-auto grid w-full max-w-[1440px] items-center gap-14 lg:grid-cols-[1.15fr_0.85fr] lg:gap-10">
-        <div className="flex flex-col gap-8">
+      <div className="mx-auto grid w-full max-w-[1520px] items-center gap-16 lg:grid-cols-[1.1fr_0.9fr] lg:gap-16">
+        <div className="flex flex-col gap-9">
           <p
-            className="hero-fade max-w-[46ch] text-body-lg text-ink-secondary"
-            style={{ "--d": "200ms" } as CSSProperties}
+            className="hero-fade flex items-center gap-3 font-mono text-body text-ink-secondary uppercase"
+            style={{ "--d": "150ms" } as CSSProperties}
           >
-            Laboratory information system for Chemical Pathology, Haematology and Medical
-            Microbiology.
+            <span aria-hidden="true" className="size-2 bg-eosin" />
+            The laboratory information system
           </p>
-          <h1 id="hero-title" className="font-serif text-mega tracking-headline text-balance">
-            {words.map((word, i) => (
-              // The space sits BETWEEN the masks: inside an inline-block, a trailing
-              // space is dropped and the words would run together.
-              <Fragment key={`${i}-${word}`}>
-                <span className="hero-mask">
-                  <span className="hero-word" style={{ "--i": i } as CSSProperties}>
-                    {word}
-                    {i === words.length - 1 && <span className="hero-dot text-eosin">.</span>}
-                  </span>
-                </span>
-                {i < words.length - 1 && " "}
-              </Fragment>
-            ))}
+          <h1 id="hero-title" className="font-serif text-mega tracking-headline">
+            <span className="block">
+              <Words words={LINE_ONE} offset={0} />
+            </span>{" "}
+            <span className="block text-primary">
+              <Words words={LINE_TWO} offset={2} last />
+            </span>
           </h1>
           <p
-            className="hero-fade max-w-[52ch] text-body-lg text-ink-secondary sm:text-[19px] sm:leading-[30px]"
+            className="hero-fade max-w-[46ch] text-lead text-ink-secondary"
             style={{ "--d": "650ms" } as CSSProperties}
           >
-            From the front desk to the verified result: one calm system for the whole lab, with
-            every value, flag and signature on record.
+            From the front desk to the verified result: one calm system for Chemical Pathology,
+            Haematology and Microbiology, with every value, flag and signature on record.
           </p>
           <div
-            className="hero-fade flex flex-wrap items-center gap-x-8 gap-y-4"
+            className="hero-fade flex flex-wrap items-center gap-x-8 gap-y-5"
             style={{ "--d": "800ms" } as CSSProperties}
           >
-            <Button variant="marketing" asChild>
-              <a href={demoHref}>Book a demo</a>
-            </Button>
-            <Button variant="link" size="lg" asChild>
-              <a href="#journey">See how it works</a>
-            </Button>
+            <CtaPill {...demoProps}>Book a demo</CtaPill>
+            <a
+              href="#journey"
+              className="text-lead underline decoration-ink-faint underline-offset-6 hover:decoration-ink"
+            >
+              See how it works
+            </a>
+          </div>
+          <div
+            className="hero-fade mt-4 flex items-center gap-8 border-t border-hairline pt-8"
+            style={{ "--d": "1000ms" } as CSSProperties}
+          >
+            <p className="flex flex-col">
+              <span className="font-serif text-[clamp(3rem,2rem+3vw,4.5rem)] leading-none tracking-headline">
+                3
+              </span>
+              <span className="font-mono text-caption text-ink-muted uppercase">sections</span>
+            </p>
+            <p className="max-w-[28ch] border-l border-hairline pl-8 text-body-lg text-ink-secondary">
+              One lab, one record. Every handover visible, every release signed.
+            </p>
           </div>
         </div>
 
-        <div
-          data-hero-figure
-          data-reveal
-          className="mx-auto w-full max-w-[380px] sm:max-w-[440px] lg:max-w-[520px]"
-        >
-          <AliquotFigure />
-        </div>
+        <HeroShowcase />
       </div>
-
-      <a
-        href="#problem"
-        className="hero-fade mx-auto mt-14 flex flex-col items-center gap-3 text-caption text-ink-muted hover:text-ink lg:absolute lg:bottom-8 lg:left-1/2 lg:mt-0 lg:-translate-x-1/2"
-        style={{ "--d": "1200ms" } as CSSProperties}
-      >
-        Scroll
-        <span aria-hidden="true" className="relative h-10 w-px overflow-hidden bg-hairline">
-          <span className="scroll-cue absolute inset-x-0 top-0 h-1/2 bg-ink" />
-        </span>
-      </a>
     </section>
   );
 }

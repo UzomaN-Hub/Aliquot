@@ -7,48 +7,59 @@ const LADDER = [
 ] as const;
 
 /**
- * The critical-value demo (ANIMATION.md "Critical alert demo"). Without motion it
- * shows the end state; with motion it plays once on arrival: the value climbs, turns
- * Eosin, the escalation line draws, and the acknowledgement lands (start-motion.ts).
+ * The critical-value demo (ANIMATION.md). Without motion it shows the end state; with
+ * motion it plays every time you arrive: the value climbs, turns Eosin, the escalation
+ * line draws and the acknowledgement lands (start-motion.ts critical).
  */
 export function Critical() {
   return (
     <section
       id="critical"
       aria-labelledby="critical-title"
-      className="scroll-mt-24 px-6 py-28 sm:px-10 lg:py-40"
+      className="relative scroll-mt-28 overflow-hidden px-6 py-28 sm:px-12 lg:py-40"
     >
-      <div className="mx-auto grid max-w-[1440px] items-center gap-16 lg:grid-cols-[1fr_1fr] lg:gap-24">
+      <p
+        aria-hidden="true"
+        className="text-outline pointer-events-none absolute right-[-3vw] bottom-0 font-serif text-[clamp(10rem,6rem+18vw,30rem)] leading-[0.8] tracking-headline select-none"
+      >
+        K⁺
+      </p>
+      <div className="relative mx-auto grid max-w-[1520px] items-center gap-16 lg:grid-cols-[1fr_1fr] lg:gap-24">
         <SectionHeading
           id="critical-title"
           index="04"
-          title="A critical result never waits in a tray."
+          label="Critical results"
+          tagline="Escalates until answered"
+          title="A critical result"
+          accent="never waits in a tray."
           intro="When a value crosses a critical limit it turns red as it's typed. On saving, the requesting doctor is alerted with a one-tap acknowledgement. Unanswered, it climbs."
         />
 
-        <div data-critical className="flex flex-col gap-10">
-          {/* The result as it appears on the bench */}
-          <div className="flex items-baseline justify-between gap-6 border-y border-hairline py-6">
+        <div
+          data-critical
+          data-surface
+          className="flex flex-col gap-10 rounded-panel border border-hairline bg-surface-raised p-8 shadow-overlay sm:p-10"
+        >
+          <div className="flex items-baseline justify-between gap-6 border-b border-hairline pb-8">
             <div className="flex flex-col gap-1">
-              <p className="text-body-lg font-medium">Potassium</p>
+              <p className="text-title font-medium">Potassium</p>
               <p className="font-mono text-body text-ink-muted">Ref. 3.5–5.1 · critical ≥ 6.5</p>
             </div>
             <p className="flex items-baseline gap-3 font-mono">
               <span
                 data-critical-value
                 data-state="critical"
-                className="text-[clamp(2.5rem,1.8rem+3vw,4rem)] leading-none data-[state=critical]:text-eosin-text"
+                className="text-[clamp(3rem,2rem+3.5vw,5rem)] leading-none data-[state=critical]:text-eosin-text"
               >
                 6.8
               </span>
-              <span className="text-body text-ink-muted">mmol/L</span>
+              <span className="text-body-lg text-ink-muted">mmol/L</span>
               <span data-critical-flag className="text-title font-semibold text-eosin-text">
                 CH↑
               </span>
             </p>
           </div>
 
-          {/* Escalation: who is told, and when */}
           <ol className="relative flex flex-col gap-8 pl-10">
             <svg
               aria-hidden="true"
@@ -70,23 +81,23 @@ export function Critical() {
               <li key={step.who} data-critical-step className="relative flex flex-col gap-1">
                 <span
                   aria-hidden="true"
-                  className="absolute top-1.5 -left-10 size-4 rounded-full border-2 border-eosin bg-surface"
+                  className="absolute top-1.5 -left-10 size-4 rounded-full border-2 border-eosin bg-surface-raised"
                 />
-                <p className="text-body-lg font-medium">
+                <p className="text-lead font-medium">
                   {step.who} <span className="font-normal text-ink-muted">· {step.when}</span>
                 </p>
-                <p className="text-body text-ink-secondary">{step.how}</p>
+                <p className="text-body-lg text-ink-secondary">{step.how}</p>
               </li>
             ))}
             <li data-critical-step className="relative flex flex-col gap-1">
               <span
                 aria-hidden="true"
-                className="absolute top-1 -left-10 grid size-4 place-items-center rounded-full bg-primary text-[10px] text-on-primary"
+                className="absolute top-1.5 -left-10 grid size-4 place-items-center rounded-full bg-primary text-[10px] text-on-primary"
               >
                 ✓
               </span>
-              <p className="text-body-lg font-medium">Acknowledged, and the escalation stops</p>
-              <p className="text-body text-ink-secondary">
+              <p className="text-lead font-medium">Acknowledged, and the escalation stops</p>
+              <p className="text-body-lg text-ink-secondary">
                 Whoever answers first. Who and when go in the audit log.
               </p>
             </li>

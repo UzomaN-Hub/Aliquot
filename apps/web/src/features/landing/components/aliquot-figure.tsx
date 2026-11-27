@@ -70,7 +70,7 @@ export function AliquotFigure() {
 
       {/* Lanes */}
       {LANES.map((lane, i) => (
-        <g key={lane.label}>
+        <g key={lane.label} data-lane-group={i} className="transition-opacity duration-500">
           <text
             data-a="label"
             x={lane.x}

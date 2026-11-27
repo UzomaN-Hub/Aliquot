@@ -9,6 +9,18 @@ import { expect, test } from "@playwright/test";
 test.skip(!process.env.CAPTURE, "Set CAPTURE=1 to take review screenshots");
 
 const PAGES = [{ name: "landing", path: "/" }];
+const SECTION_IDS = [
+  "problem",
+  "journey",
+  "disciplines",
+  "critical",
+  "delivery",
+  "safety",
+  "people",
+  "next",
+  "questions",
+  "contact",
+];
 const SIZES = [
   { name: "desktop", width: 1440, height: 900 },
   { name: "phone", width: 390, height: 844 },
@@ -40,6 +52,17 @@ for (const target of PAGES) {
           path: `test-results/capture/${target.name}-${size.name}-${theme}-full.png`,
           fullPage: true,
         });
+
+        // Each landing section as a visitor sees it, after its entrance has played.
+        if (target.name === "landing") {
+          for (const id of SECTION_IDS) {
+            await page.locator(`#${id}`).evaluate((el) => el.scrollIntoView({ block: "start" }));
+            await page.waitForTimeout(2200);
+            await page.screenshot({
+              path: `test-results/capture/${target.name}-${size.name}-${theme}-${id}.png`,
+            });
+          }
+        }
       });
     }
   }

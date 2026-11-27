@@ -5,26 +5,26 @@ const FACTS = [
   {
     value: 3,
     unit: "",
-    label: "disciplines in one system",
-    detail: "Chemical Pathology, Haematology, Medical Microbiology",
+    label: "sections in one system",
+    detail: "Chemical Pathology, Haematology, Medical Microbiology.",
   },
   {
     value: 4,
     unit: "",
-    label: "roles, each seeing only its part",
-    detail: "Front Desk to Manager",
+    label: "roles, each seeing its part",
+    detail: "Front Desk, Lab Scientist, Chief Scientist, Manager.",
   },
   {
     value: 15,
     unit: "min",
-    label: "before an unanswered critical result escalates",
-    detail: "Set by each lab",
+    label: "before a critical escalates",
+    detail: "Unanswered alerts climb to the Chief Scientist, then the Manager.",
   },
   {
     value: 0,
     unit: "",
-    label: "results released without a Chief Scientist",
-    detail: "Every release is verified and signed",
+    label: "unverified releases",
+    detail: "Every result is checked and signed by a Chief Scientist.",
   },
 ] as const;
 
@@ -33,30 +33,40 @@ export function Problem() {
     <section
       id="problem"
       aria-labelledby="problem-title"
-      className="scroll-mt-24 px-6 py-28 sm:px-10 lg:py-40"
+      className="scroll-mt-28 px-6 py-28 sm:px-12 lg:py-40"
     >
-      <div className="mx-auto grid max-w-[1440px] gap-16 lg:grid-cols-[1fr_1fr] lg:gap-24">
-        <SectionHeading
-          id="problem-title"
-          index="01"
-          title="Paper can't raise its hand."
-          intro="Results copied by hand, critical values phoned through, a sample's whereabouts known only to whoever last held it. Every handover is a chance to lose something that matters to a patient."
-        />
-        <dl className="grid grid-cols-2 gap-x-6 gap-y-12 self-end sm:gap-x-10">
-          {FACTS.map((fact) => (
+      <div className="mx-auto flex max-w-[1520px] flex-col gap-24">
+        <div className="grid gap-12 lg:grid-cols-[1.25fr_0.75fr] lg:items-end">
+          <SectionHeading
+            id="problem-title"
+            index="01"
+            label="The problem"
+            tagline="Every handover is a risk"
+            title="Paper can’t raise its hand."
+            accent="Aliquot can."
+          />
+          <p data-reveal data-split="words" className="text-lead text-ink-secondary lg:pb-3">
+            Results copied by hand, critical values phoned through, a sample&apos;s whereabouts
+            known only to whoever last held it. Aliquot records every step as it happens, and speaks
+            up when something can&apos;t wait.
+          </p>
+        </div>
+
+        <dl className="grid grid-cols-2 border-t border-hairline lg:grid-cols-4">
+          {FACTS.map((fact, i) => (
             <div
               key={fact.label}
               data-reveal="fade"
-              className="flex flex-col gap-2 border-t border-hairline pt-5"
+              className={`flex flex-col gap-3 pt-10 pr-6 pb-4 ${i > 0 ? "lg:border-l lg:border-hairline lg:pl-8" : ""} ${i % 2 === 1 ? "border-l border-hairline pl-6 lg:pl-8" : ""}`}
             >
-              <dt className="order-2 text-body-lg text-ink">{fact.label}</dt>
-              <dd className="order-1 flex items-baseline gap-1 font-serif text-[clamp(3rem,2rem+4vw,5.5rem)] leading-none tracking-headline">
+              <dd className="order-1 flex items-baseline gap-2 font-serif text-[clamp(4.5rem,2.5rem+6vw,9rem)] leading-[0.9] tracking-headline">
                 <span data-count={fact.value}>{fact.value}</span>
                 {fact.unit && (
-                  <span className="font-sans text-title text-ink-secondary">{fact.unit}</span>
+                  <span className="font-sans text-figure text-ink-secondary">{fact.unit}</span>
                 )}
               </dd>
-              <dd className="order-3 text-body text-ink-muted">{fact.detail}</dd>
+              <dt className="order-2 text-title font-medium">{fact.label}</dt>
+              <dd className="order-3 max-w-[30ch] text-body-lg text-ink-muted">{fact.detail}</dd>
             </div>
           ))}
         </dl>

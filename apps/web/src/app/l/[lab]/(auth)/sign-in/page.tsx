@@ -72,7 +72,10 @@ function SignInSkeleton() {
           <Skeleton className="h-8 w-56 sm:h-10 sm:w-72" />
         </div>
         <div className="flex flex-1 items-center justify-center px-4 py-12">
-          <div className="flex w-full max-w-[460px] flex-col gap-6 rounded-panel border border-hairline bg-surface-raised px-7 py-12 sm:px-12 sm:py-14">
+          <div
+            data-surface
+            className="flex w-full max-w-[460px] flex-col gap-6 rounded-panel border border-hairline bg-surface-raised px-7 py-12 sm:px-12 sm:py-14"
+          >
             <Skeleton className="h-8 w-32" />
             <Skeleton className="h-11 w-full" />
             <Skeleton className="h-11 w-full" />
