@@ -169,7 +169,7 @@ export function HeroShowcase() {
         </Floating>
 
         {/* The active section's result, swapped with the tab */}
-        <Floating className="top-[1%] right-[-4%] sm:right-0" depth={1.3} delay={2000} drift={6.5}>
+        <Floating className="top-[1%] right-0" depth={1.3} delay={2000} drift={6.5}>
           <div data-surface className={cn(card, "w-38 sm:w-52")}>
             <div key={active} className="switcher-panel flex flex-col gap-1.5">
               <span className="text-caption text-ink-muted">{tab.card.test}</span>
