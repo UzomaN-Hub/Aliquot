@@ -75,7 +75,7 @@ export function LabsList() {
               </th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="stagger">
             {labs.data.map((lab) => (
               <tr
                 key={lab.id}

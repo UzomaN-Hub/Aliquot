@@ -3,8 +3,9 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
 /**
- * The landing's big action pill: label + arrow in a circle. Ink at rest, Prussian on
- * hover (on light pages), the arrow nudging up and right. `tone="light"` for use on
+ * The landing's big action pill: label + arrow in a circle. In light mode Prussian at
+ * rest and ink on hover (decision 021); in dark mode ink, then Prussian. On the
+ * Prussian nav it is Bone, then ink. The arrow nudges up and right. `tone="light"` for use on
  * Prussian or graphite blocks. Extra props (href, data-soon…) pass to the <a>.
  */
 export function CtaPill({
@@ -25,7 +26,7 @@ export function CtaPill({
         "group inline-flex cursor-pointer items-center gap-4 rounded-full font-medium transition-colors duration-300",
         size === "lg" ? "h-16 pr-2 pl-8 text-lead" : "h-13 pr-1.5 pl-6 text-body-lg",
         tone === "ink"
-          ? "bg-ink text-surface hover:bg-primary"
+          ? "bg-cta text-on-cta hover:bg-cta-hover hover:text-on-cta-hover"
           : "bg-surface text-ink hover:bg-ink hover:text-surface",
         className,
       )}
@@ -37,7 +38,9 @@ export function CtaPill({
         className={cn(
           "grid place-items-center rounded-full transition-colors duration-300",
           size === "lg" ? "size-12 text-title" : "size-10 text-body-lg",
-          tone === "ink" ? "bg-surface/15" : "bg-ink/10 group-hover:bg-surface/15",
+          tone === "ink"
+            ? "bg-on-cta/15 group-hover:bg-on-cta-hover/15"
+            : "bg-ink/10 group-hover:bg-surface/15",
         )}
       >
         <span className="transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5">

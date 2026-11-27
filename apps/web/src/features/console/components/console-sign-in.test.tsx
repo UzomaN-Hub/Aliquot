@@ -51,7 +51,7 @@ describe("ConsoleSignIn", () => {
     render(<ConsoleSignIn />);
     const user = await passwordStep();
 
-    expect(await screen.findByRole("heading", { name: "Enter your code" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Enter your code." })).toBeInTheDocument();
     await user.type(screen.getByLabelText("6-digit code"), "123 456");
     await user.click(screen.getByRole("button", { name: "Sign in" }));
 
@@ -79,7 +79,7 @@ describe("ConsoleSignIn", () => {
     await passwordStep();
 
     expect(
-      await screen.findByRole("heading", { name: "Set up two-step sign-in" }),
+      await screen.findByRole("heading", { name: "Set up two-step sign-in." }),
     ).toBeInTheDocument();
     expect(screen.getByRole("img", { name: /QR code/ })).toBeInTheDocument();
     expect(screen.getByText("ABCD EFGH IJKL MNOP")).toBeInTheDocument();

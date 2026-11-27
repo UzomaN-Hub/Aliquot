@@ -33,7 +33,14 @@ async function SetPasswordScreen({ slug }: { slug: string }) {
   const lab = await getLabBranding(slug);
   if (!lab) notFound();
   return (
-    <AuthFrame wordmark={lab.name} footer={`Powered by ${serverConfig.PLATFORM_NAME}`}>
+    <AuthFrame
+      brand={lab.name}
+      cardLabel={`${lab.name} · staff`}
+      tag="Set password"
+      status="Secure link"
+      help="Link not working? Ask your lab manager for a new one."
+      credit={`Powered by ${serverConfig.PLATFORM_NAME}`}
+    >
       <SetPasswordForm lab={lab.slug} />
     </AuthFrame>
   );

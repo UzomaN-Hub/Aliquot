@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
+import { ComingSoon } from "@/components/patterns/coming-soon";
 import { Closing } from "@/features/landing/components/closing";
-import { ComingSoon } from "@/features/landing/components/coming-soon";
 import { Critical } from "@/features/landing/components/critical";
 import { Delivery } from "@/features/landing/components/delivery";
 import { Disciplines } from "@/features/landing/components/disciplines";

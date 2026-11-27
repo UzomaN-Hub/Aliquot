@@ -37,6 +37,11 @@
   --overlay-shadow: rgb(31 30 28 / 0.14);
   --scrim: rgb(31 30 28 / 0.28);
   --veil: rgb(246 243 236 / 0.62); /* over the sign-in backdrop */
+  /* The landing's big action pill (decision 021): Prussian at rest, ink on hover. */
+  --cta: #1b3a5c;
+  --on-cta: #f6f3ec;
+  --cta-hover: #1f1e1c;
+  --on-cta-hover: #f6f3ec;
   --stain-film-opacity: 1;
 
   /* The drawn blood film behind sign-in (Leishman-stained look, muted). Never text. */
@@ -53,10 +58,40 @@
   --bar: #262523;
   --on-bar: #f2efe8;
   --on-bar-muted: #a8a49c;
+  /* Dark mode keeps the pill as it was: ink at rest, Prussian on hover. */
+  --cta: #1f1e1c;
+  --cta-hover: #1b3a5c;
+}
+
+/* ── Prussian blocks (decision 021): the landing nav and section bar. Prussian in
+      light mode; in dark mode they take the graphite palette below, unchanged. ── */
+[data-tone="bar"] {
+  color-scheme: dark;
+  --surface: #1b3a5c; /* Prussian */
+  --surface-raised: #21446a;
+  --ink: #f6f3ec; /* 10.6:1 on Prussian */
+  --ink-secondary: #d5dce4; /* 8.4:1 */
+  --ink-muted: #bcc7d3; /* 6.9:1 */
+  --ink-faint: #8fa3b8; /* NON-TEXT only: 4.5:1 */
+  --primary: #a9bcd0; /* 6.0:1 */
+  --primary-hover: #f6f3ec;
+  --on-primary: #1b3a5c;
+  --primary-tint: #2a4c70;
+  --hover: #234769;
+  --hairline: #34536f;
+  --eosin: #e0566f;
+  --eosin-text: #eb8a9a; /* 4.7:1 */
+  --overlay-shadow: rgb(16 34 54 / 0.35);
+  /* On Prussian the pill turns Bone, then ink on hover, so it never disappears. */
+  --cta: #f6f3ec;
+  --on-cta: #1b3a5c;
+  --cta-hover: #1f1e1c;
+  --on-cta-hover: #f6f3ec;
 }
 
 /* ── Graphite palette: surfaces in dark mode, and always-dark blocks ─── */
 [data-theme="dark"] [data-surface],
+[data-theme="dark"] [data-tone="bar"],
 [data-tone="dark"] {
   color-scheme: dark;
   --surface: #1e1e1c; /* graphite */
@@ -80,4 +115,9 @@
   --scrim: rgb(0 0 0 / 0.4);
   --veil: rgb(30 30 28 / 0.6);
   --stain-film-opacity: 0.28;
+  /* The pill on graphite: light at rest, softened Prussian on hover (as before). */
+  --cta: #f2efe8;
+  --on-cta: #1e1e1c;
+  --cta-hover: #a9bcd0;
+  --on-cta-hover: #1e1e1c;
 }

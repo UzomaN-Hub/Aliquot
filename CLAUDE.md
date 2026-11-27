@@ -50,9 +50,9 @@ All decisions live in `docs/`. Read the ones relevant to the task before writing
 **Design**
 - Only the three colours and their tints from DESIGN.md exist in Tailwind; no raw hex in app code.
 - Fonts: `font-serif` Instrument Serif, `font-sans` Atkinson Hyperlegible Next, `font-mono` Atkinson Hyperlegible Mono. Nothing else.
-- Pages use components from `/styleguide` only. One primary button per screen. No decorative badges, pills, eyebrow labels, gradients, icons-as-decoration or emoji.
+- Pages use components from `/styleguide` only. One primary button per screen. No decorative badges, pills, eyebrow labels, gradients, icons-as-decoration or emoji (functional tags and statuses on landing and sign-in are listed in DESIGN.md rule 4).
 - Every screen ships with loading, empty, error and success states (DESIGN.md "Feedback & states").
-- Animation exists only on the landing hero.
+- Rich animation lives on the landing. Elsewhere only quiet CSS entrances (decision 020): transform and opacity, under 0.7 s, never on result values, off for reduced motion.
 
 ## 3. Learning mode (always on)
 - Before introducing a tool, library or pattern for the first time, explain in plain words: what it is, why we use it, what goes wrong without it. Keep it short.

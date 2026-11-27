@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 
+import { AuthLead, AuthNote, AuthTitle, SoonLink } from "@/components/patterns/auth-frame";
 import { Button } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/field";
 import { FormError } from "@/components/ui/form-error";
@@ -65,33 +66,48 @@ function PasswordStep({ onNext }: { onNext: (step: SignInStep) => void }) {
 
   return (
     <>
-      <h1 className="text-figure font-medium">Console sign-in</h1>
-      <p className="mt-2 mb-9 text-body-lg text-ink-secondary">For platform administrators.</p>
-      <form noValidate onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
+      <AuthTitle lead="Platform" accent="console" />
+      <AuthLead>For the people who run the platform.</AuthLead>
+      <form
+        noValidate
+        onSubmit={handleSubmit(onSubmit)}
+        className="stagger flex flex-col gap-7 [--stagger-start:320ms]"
+      >
         <FormError message={formError} />
-        <Field label="Email" error={errors.email?.message}>
+        <Field look="line" index={1} label="Email" error={errors.email?.message}>
           <Input
             size="lg"
             type="email"
             autoComplete="username"
             autoCapitalize="none"
             spellCheck={false}
+            placeholder="Your email"
             {...register("email")}
           />
         </Field>
-        <Field label="Password" error={errors.password?.message}>
-          <PasswordInput size="lg" autoComplete="current-password" {...register("password")} />
+        <Field look="line" index={2} label="Password" error={errors.password?.message}>
+          <PasswordInput
+            size="lg"
+            autoComplete="current-password"
+            placeholder="Your password"
+            {...register("password")}
+          />
         </Field>
-        <Button
-          type="submit"
-          size="lg"
-          className="mt-3 w-full"
-          pending={isSubmitting}
-          pendingLabel="Checking…"
-        >
-          Continue
-        </Button>
+        <div className="pt-2">
+          <Button type="submit" size="xl" pending={isSubmitting} pendingLabel="Checking…">
+            Continue
+          </Button>
+        </div>
       </form>
+      <AuthNote note="Resetting by email arrives soon.">
+        <SoonLink
+          strong
+          soon="Password reset"
+          text="Resetting your password by email arrives very soon, and it will still ask for your authenticator code. Until then, another super-admin can help."
+        >
+          Forgot your password?
+        </SoonLink>
+      </AuthNote>
     </>
   );
 }
@@ -135,17 +151,19 @@ function CodeStep({ step, onRestart }: { step: SignInStep; onRestart: () => void
 
   return (
     <>
-      <h1 className="text-figure font-medium">
-        {setup ? "Set up two-step sign-in" : "Enter your code"}
-      </h1>
-      <p className="mt-2 mb-8 text-body-lg text-ink-secondary">
+      {setup ? (
+        <AuthTitle lead="Set up" accent="two-step sign-in" />
+      ) : (
+        <AuthTitle lead="Enter your" accent="code" />
+      )}
+      <AuthLead>
         {setup
           ? "Scan this with an authenticator app (Google Authenticator, Microsoft Authenticator, 1Password), then enter the 6-digit code it shows."
           : "Open your authenticator app and enter the 6-digit code for the console."}
-      </p>
+      </AuthLead>
 
       {setup && (
-        <div className="mb-8 flex flex-col items-start gap-4">
+        <div className="mb-10 flex animate-rise flex-col items-start gap-5 [animation-delay:320ms] sm:flex-row sm:items-center sm:gap-8">
           {/* Our API's QR as an SVG data URI (checked by the schema); an image, never injected. */}
           {/* eslint-disable-next-line @next/next/no-img-element -- inline data: SVG, nothing for next/image to optimise */}
           <img
@@ -167,31 +185,37 @@ function CodeStep({ step, onRestart }: { step: SignInStep; onRestart: () => void
         </div>
       )}
 
-      <form noValidate onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
+      <form
+        noValidate
+        onSubmit={handleSubmit(onSubmit)}
+        className="stagger flex flex-col gap-7 [--stagger-start:400ms]"
+      >
         <FormError message={formError} />
-        <Field label="6-digit code" error={errors.code?.message}>
+        <Field look="line" label="6-digit code" error={errors.code?.message}>
           <Input
             size="lg"
             mono
             inputMode="numeric"
             autoComplete="one-time-code"
             maxLength={7}
+            placeholder="000 000"
             className="tracking-[0.3em]"
             {...register("code")}
           />
         </Field>
-        <Button
-          type="submit"
-          size="lg"
-          className="mt-3 w-full"
-          pending={isSubmitting || redirecting}
-          pendingLabel="Verifying…"
-        >
-          {setup ? "Turn on and sign in" : "Sign in"}
-        </Button>
-        <Button variant="link" className="self-center" onClick={onRestart}>
-          Use a different account
-        </Button>
+        <div className="flex flex-col items-center gap-3 pt-2">
+          <Button
+            type="submit"
+            size="xl"
+            pending={isSubmitting || redirecting}
+            pendingLabel="Verifying…"
+          >
+            {setup ? "Turn on and sign in" : "Sign in"}
+          </Button>
+          <Button variant="link" onClick={onRestart}>
+            Use a different account
+          </Button>
+        </div>
       </form>
     </>
   );

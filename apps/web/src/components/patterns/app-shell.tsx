@@ -7,6 +7,7 @@ import { firstName, roleLabels } from "@/lib/format/labels";
 import { useSessionStore } from "@/stores/session";
 
 import { AppMenu, type MenuDestination } from "./app-menu";
+import { PageEnter } from "./page-enter";
 import { TopBar } from "./top-bar";
 
 /**
@@ -29,7 +30,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <TopBar
         home={base}
         wordmark={
-          <span className="font-serif text-title tracking-headline">{session.lab.name}</span>
+          <span className="font-serif text-figure tracking-headline">{session.lab.name}</span>
         }
         items={destinations.map((item) => ({ href: item.href, label: item.label, exact: true }))}
         right={
@@ -51,7 +52,9 @@ export function AppShell({ children }: { children: ReactNode }) {
           </>
         }
       />
-      <main className="mx-auto max-w-[1440px] px-6 pt-12 pb-16 sm:px-10">{children}</main>
+      <main className="mx-auto max-w-[1440px] px-6 pt-12 pb-16 sm:px-10">
+        <PageEnter>{children}</PageEnter>
+      </main>
     </div>
   );
 }

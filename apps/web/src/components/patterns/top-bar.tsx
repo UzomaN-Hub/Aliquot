@@ -16,7 +16,8 @@ const under = (pathname: string, base: string) =>
 /**
  * The Prussian top bar (decision 014), shared by the lab app and the console.
  * Left: the wordmark. Middle: the few places used most. Right: whoever is signed in
- * and the menu. The current place is semibold with a 2px rule under it.
+ * and the menu. The current place is semibold with a 2px rule under it, which
+ * draws in from the left when you arrive (decision 020).
  */
 export function TopBar({
   home,
@@ -33,8 +34,8 @@ export function TopBar({
 
   return (
     <header className="sticky top-0 z-30 bg-bar text-on-bar">
-      <div className="mx-auto flex h-16 max-w-[1440px] items-center gap-10 px-6 sm:px-10">
-        <Link href={home} className="flex items-baseline gap-2 leading-none">
+      <div className="mx-auto flex h-18 max-w-[1440px] items-center gap-10 px-6 sm:px-10">
+        <Link href={home} className="group flex items-baseline gap-2.5 leading-none">
           {wordmark}
         </Link>
         <nav aria-label="Main" className="hidden h-full md:block">
@@ -51,7 +52,7 @@ export function TopBar({
                     className={cn(
                       "relative flex items-center text-body transition-colors",
                       current
-                        ? "font-semibold text-on-bar after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-on-bar"
+                        ? "nav-current font-semibold text-on-bar after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-on-bar"
                         : "text-on-bar-muted hover:text-on-bar",
                     )}
                   >

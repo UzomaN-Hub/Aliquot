@@ -83,7 +83,7 @@ export function LabDetail({ id }: { id: string }) {
         <EditLab lab={data} onDone={() => setEditing(false)} />
       ) : (
         <>
-          <dl className="grid gap-x-10 gap-y-6 sm:grid-cols-2">
+          <dl className="stagger grid gap-x-10 gap-y-6 [--stagger-start:120ms] sm:grid-cols-2">
             <Fact label="Staff" mono value={String(data.staff_count)} />
             <Fact
               label="Sections"

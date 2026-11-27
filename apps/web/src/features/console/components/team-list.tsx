@@ -87,7 +87,7 @@ export function TeamList() {
                 </th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="stagger">
               {members.map((member) => {
                 const status = teamStatus(member);
                 return (

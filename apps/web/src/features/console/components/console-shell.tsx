@@ -5,7 +5,9 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 
 import { AppMenu } from "@/components/patterns/app-menu";
+import { PageEnter } from "@/components/patterns/page-enter";
 import { TopBar } from "@/components/patterns/top-bar";
+import { Wordmark } from "@/components/patterns/wordmark";
 import { Button } from "@/components/ui/button";
 import { firstName } from "@/lib/format/labels";
 import { useConsoleSession } from "@/stores/console-session";
@@ -105,7 +107,7 @@ export function ConsoleShell({
           home="/console"
           wordmark={
             <>
-              <span className="font-serif text-title tracking-headline">{platformName}</span>
+              <Wordmark name={platformName} className="text-figure" />
               <span className="text-body text-on-bar-muted">Console</span>
             </>
           }
@@ -132,7 +134,9 @@ export function ConsoleShell({
             </>
           }
         />
-        <main className="mx-auto max-w-[1440px] px-6 pt-12 pb-16 sm:px-10">{children}</main>
+        <main className="mx-auto max-w-[1440px] px-6 pt-12 pb-16 sm:px-10">
+          <PageEnter>{children}</PageEnter>
+        </main>
       </div>
     </QueryClientProvider>
   );

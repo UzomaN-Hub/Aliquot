@@ -59,7 +59,7 @@ export function AppMenu({
           data-surface
           align="end"
           sideOffset={8}
-          className="z-50 w-80 rounded-panel border border-hairline bg-surface-raised p-2 text-ink shadow-overlay"
+          className="z-50 w-80 origin-(--radix-dropdown-menu-content-transform-origin) animate-pop rounded-panel border border-hairline bg-surface-raised p-2 text-ink shadow-overlay"
         >
           <div className="px-3 pt-2 pb-3">
             <p className="text-body font-medium">{name}</p>

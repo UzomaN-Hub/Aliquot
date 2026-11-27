@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 
 import { serverConfig } from "@/lib/config";
 
-import { ButtonSection, FieldSection } from "./_parts/components";
+import { ButtonSection, FieldSection, WordmarkSection } from "./_parts/components";
 import { BannerSection, FlagSection } from "./_parts/feedback";
 import { Foundations } from "./_parts/foundations";
 
@@ -18,6 +18,7 @@ const contents = [
   ["shape", "Shape"],
   ["button", "Button"],
   ["field", "Field"],
+  ["wordmark", "Wordmark"],
   ["flag", "Flag"],
   ["banner", "Banner"],
 ] as const;
@@ -57,6 +58,7 @@ export default function StyleguidePage() {
       <Foundations />
       <ButtonSection />
       <FieldSection />
+      <WordmarkSection />
       <FlagSection />
       <BannerSection />
     </main>

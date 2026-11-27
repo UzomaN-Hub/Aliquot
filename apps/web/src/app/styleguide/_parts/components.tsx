@@ -1,3 +1,4 @@
+import { Wordmark } from "@/components/patterns/wordmark";
 import { Button } from "@/components/ui/button";
 import { Field, Input, Textarea } from "@/components/ui/field";
 import { PasswordInput } from "@/components/ui/password-input";
@@ -37,6 +38,11 @@ export function ButtonSection() {
         </Specimen>
         <Specimen label="Marketing pill" note="landing page only">
           <Button variant="marketing">Book a demo</Button>
+        </Specimen>
+        <Specimen label="Big pill · xl 60px" note="sign-in style pages: label left, arrow tile">
+          <div className="w-full max-w-sm">
+            <Button size="xl">Sign in</Button>
+          </div>
         </Specimen>
       </ThemePair>
     </Section>
@@ -82,6 +88,48 @@ export function FieldSection() {
           <Field label="Section" hint="Disabled: rare, always with the reason.">
             <Input disabled defaultValue="Haematology" />
           </Field>
+        </div>
+      </ThemePair>
+      <h3 className="mt-12 mb-2 text-title font-medium">Line fields</h3>
+      <p className="mb-6 max-w-2xl text-body text-ink-secondary">
+        One bold underline; on focus a Prussian line draws across from the left. For sign-in,
+        set-password and short forms with room to breathe. Bench screens, search and multi-line text
+        keep the box (decision 020).
+      </p>
+      <ThemePair>
+        <div className="grid max-w-md gap-7">
+          <Field look="line" index={1} label="Email">
+            <Input size="lg" type="email" autoComplete="off" placeholder="Your work email" />
+          </Field>
+          <Field look="line" index={2} label="Password">
+            <PasswordInput size="lg" autoComplete="off" placeholder="Your password" />
+          </Field>
+          <Field look="line" index={3} label="Lab name" error="Enter the lab's name.">
+            <Input autoComplete="off" />
+          </Field>
+          <Field look="line" label="Website" optional hint="Without a number: a single field.">
+            <Input autoComplete="off" />
+          </Field>
+        </div>
+      </ThemePair>
+    </Section>
+  );
+}
+
+export function WordmarkSection() {
+  return (
+    <Section
+      id="wordmark"
+      title="Wordmark"
+      intro="The platform's mark: a drop of Eosin falling into a tube. The name comes from config. Hover it: the drop bobs."
+    >
+      <ThemePair>
+        <div className="flex flex-col items-start gap-6">
+          <Wordmark name="Aliquot" className="text-wordmark" />
+          <Wordmark name="Aliquot" className="text-figure" />
+          <div className="rounded-panel bg-bar px-5 py-4 text-on-bar">
+            <Wordmark name="Aliquot" className="text-figure" />
+          </div>
         </div>
       </ThemePair>
     </Section>
