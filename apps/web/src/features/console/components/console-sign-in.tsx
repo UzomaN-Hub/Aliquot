@@ -157,7 +157,10 @@ function CodeStep({ step, onRestart }: { step: SignInStep; onRestart: () => void
           />
           <div>
             <p className="text-caption text-ink-muted">Can&apos;t scan? Enter this key instead:</p>
-            <p className="font-mono text-body tracking-wide break-all select-all">
+            <p
+              data-testid="totp-key"
+              className="font-mono text-body tracking-wide break-all select-all"
+            >
               {setup.secret.match(/.{1,4}/g)?.join(" ")}
             </p>
           </div>

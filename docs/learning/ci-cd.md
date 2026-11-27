@@ -57,6 +57,12 @@
 - It fails if any job in `needs:` failed or was cancelled; "skipped" counts as fine.
 - Adding a job later = add it to `needs:`; the ruleset never changes.
 
+**Job `e2e`** (browser tests, decision 016): runs when the API or the web changes.
+- A Postgres service container, the API's and web's dependencies, then `playwright install --with-deps` for Chromium, Firefox and WebKit. The browsers (~400 MB) are cached with **`actions/cache`**, keyed on the lock file.
+- `e2e_seed` prepares the database, `pnpm build` builds the web, and `pnpm e2e` makes Playwright start the API and `next start` itself.
+- `ENVIRONMENT=local` here means "plain http on localhost", so cookies work in every engine.
+- `if: failure()` + **`actions/upload-artifact`** keeps the report (screenshots, traces) for 7 days, downloadable from the run's page.
+
 ## `deploy-staging.yml`, part by part
 **Trigger `workflow_run`** — runs when the **CI** workflow *finishes* on `main`; the first job checks it *passed*. A red `main` never deploys. `workflow_dispatch` adds a manual "Run workflow" button.
 **`head_sha`** — every job checks out the exact commit CI tested, not whatever `main` has become since.
