@@ -132,3 +132,32 @@ test.describe("landing: coming soon and section bar", () => {
     );
   });
 });
+
+test.describe("landing: refresh and movement", () => {
+  test("a refresh starts at the hero, even from a section link", async ({ page }) => {
+    await page.goto("/");
+    await page.evaluate(() => window.scrollTo(0, 3000));
+    await page.waitForTimeout(500);
+    await page.reload();
+    await page.waitForTimeout(1500);
+    expect(await page.evaluate(() => window.scrollY)).toBe(0);
+
+    await page.goto("/#safety");
+    await page.reload();
+    await page.waitForTimeout(1500);
+    expect(await page.evaluate(() => window.scrollY)).toBe(0);
+    expect(page.url()).not.toContain("#");
+  });
+
+  test("the marquee keeps moving with the mouse over it", async ({ page }) => {
+    await page.goto("/");
+    const band = page.locator("section.marquee");
+    await band.scrollIntoViewIfNeeded();
+    await band.hover(); // the container is still; the track inside never is
+    const track = band.locator(".marquee-track").first();
+    const x = () => track.evaluate((el) => new DOMMatrix(getComputedStyle(el).transform).m41);
+    const before = await x();
+    await page.waitForTimeout(800);
+    expect(await x()).not.toBe(before);
+  });
+});

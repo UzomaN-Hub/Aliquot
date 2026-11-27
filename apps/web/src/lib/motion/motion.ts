@@ -31,3 +31,10 @@ export function setMotionPaused(paused: boolean): void {
 
 /** Runs in <head> before first paint, with the theme script. Static; no user data. */
 export const motionBootScript = `(function(){var r=document.documentElement;r.classList.add("js");try{if(localStorage.getItem("${MOTION_KEY}")!=="paused"&&!matchMedia("(prefers-reduced-motion: reduce)").matches)r.classList.add("motion-on")}catch(e){}})();`;
+
+/**
+ * Landing page only: a refresh starts at the top (hero and nav), never mid-page or at
+ * a section the address still points to. A fresh visit to a shared link (/#safety)
+ * still goes to that section. Runs in <head>, before the browser restores anything.
+ */
+export const landingScrollBootScript = `(function(){if(location.pathname!=="/")return;try{history.scrollRestoration="manual";var n=performance.getEntriesByType("navigation")[0];if(n&&n.type==="reload"){if(location.hash)history.replaceState(null,"",location.pathname+location.search);scrollTo(0,0);addEventListener("load",function(){scrollTo(0,0)})}}catch(e){}})();`;

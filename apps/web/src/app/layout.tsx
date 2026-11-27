@@ -7,7 +7,7 @@ import {
 
 import { ThemeController } from "@/components/ui/theme-controller";
 import { serverConfig } from "@/lib/config";
-import { motionBootScript } from "@/lib/motion/motion";
+import { landingScrollBootScript, motionBootScript } from "@/lib/motion/motion";
 import { themeBootScript } from "@/lib/theme/theme";
 
 import "@/styles/globals.css";
@@ -47,7 +47,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <head>
         {/* Static string from lib/theme (no user data); gets the CSP nonce when proxy.ts lands. */}
-        <script dangerouslySetInnerHTML={{ __html: themeBootScript + motionBootScript }} />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: themeBootScript + motionBootScript + landingScrollBootScript,
+          }}
+        />
       </head>
       <body>
         <ThemeController />

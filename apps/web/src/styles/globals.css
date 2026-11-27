@@ -209,6 +209,38 @@
   [data-active-lane="2"] [data-lane-group]:not([data-lane-group="2"]) {
     opacity: 0.22;
   }
+  /* Hero layers: drift, a turning stamp, a scanner sweeping the barcode. */
+  .motion-on .hero-float {
+    animation: hero-float var(--f, 6s) ease-in-out infinite alternate;
+  }
+  @keyframes hero-float {
+    from {
+      transform: translateY(-8px);
+    }
+    to {
+      transform: translateY(8px);
+    }
+  }
+  .motion-on .hero-spin {
+    animation: hero-spin 22s linear infinite;
+  }
+  @keyframes hero-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  .hero-scan {
+    opacity: 0;
+  }
+  .motion-on .hero-scan {
+    opacity: 1;
+    animation: hero-scan 1.8s cubic-bezier(0.65, 0, 0.35, 1) infinite alternate;
+  }
+  @keyframes hero-scan {
+    to {
+      transform: translateX(142px);
+    }
+  }
   .hero-progress {
     width: 0;
     animation: hero-progress linear forwards;
@@ -254,14 +286,16 @@
     }
   }
 
-  /* Marquee band: two copies slide left forever; hover pauses it. */
+  /* Marquee bands: two copies slide forever, the second band the other way.
+     Never paused by hover (it read as broken); scrolling speeds it up. */
   .marquee-track {
     display: flex;
     width: max-content;
-    animation: marquee 38s linear infinite;
+    animation: marquee 30s linear infinite;
   }
-  .marquee:hover .marquee-track {
-    animation-play-state: paused;
+  .marquee-reverse {
+    animation-direction: reverse;
+    animation-duration: 36s;
   }
   @keyframes marquee {
     to {
@@ -269,6 +303,8 @@
     }
   }
   html:not(.motion-on) .marquee-track,
+  html:not(.motion-on) .hero-float,
+  html:not(.motion-on) .hero-spin,
   html:not(.motion-on) .hero-progress,
   html:not(.motion-on) .switcher-panel {
     animation: none;

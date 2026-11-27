@@ -31,6 +31,8 @@ export function LandingMotion() {
       generation++;
       window.removeEventListener(MOTION_EVENT, apply);
       stop?.();
+      // Leaving the landing page: the rest of the site restores scroll normally.
+      history.scrollRestoration = "auto";
     };
   }, []);
 
