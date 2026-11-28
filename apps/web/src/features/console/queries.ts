@@ -4,14 +4,20 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import {
   changeLabStatus,
+  changePassword,
   changeTeamMember,
+  confirmNewAuthenticator,
   createLab,
+  createRecoveryCodes,
+  getAccount,
   getLab,
   getTeamMember,
   inviteAdmin,
   listLabs,
   listTeam,
   resendInvite,
+  signOutOthers,
+  startNewAuthenticator,
   updateLab,
   type TeamAction,
 } from "./api";
@@ -23,6 +29,7 @@ export const consoleKeys = {
   lab: (id: string) => ["console", "labs", id] as const,
   team: () => ["console", "team"] as const,
   member: (id: string) => ["console", "team", id] as const,
+  account: () => ["console", "account"] as const,
 };
 
 /** A fresh key per submit: a double click or a network retry of the SAME submit
@@ -116,5 +123,57 @@ export function useChangeTeamMember(id: string) {
       queryClient.setQueryData(consoleKeys.member(id), member);
       return queryClient.invalidateQueries({ queryKey: consoleKeys.team() });
     },
+  });
+}
+
+// ── My account (decision 023) ────────────────────────────────────────────
+export function useAccount() {
+  return useQuery({ queryKey: consoleKeys.account(), queryFn: getAccount, staleTime: 30_000 });
+}
+
+/** Every account change can end other devices or spend codes: read the account again. */
+function useRefreshAccount() {
+  const queryClient = useQueryClient();
+  return () => queryClient.invalidateQueries({ queryKey: consoleKeys.account() });
+}
+
+export function useChangePassword() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ current, next, key }: { current: string; next: string; key: string }) =>
+      changePassword(current, next, key),
+    onSuccess: (account) => queryClient.setQueryData(consoleKeys.account(), account),
+  });
+}
+
+export function useSignOutOthers() {
+  const refresh = useRefreshAccount();
+  return useMutation({
+    mutationFn: ({ key }: { key: string }) => signOutOthers(key),
+    onSuccess: refresh,
+  });
+}
+
+export function useCreateRecoveryCodes() {
+  const refresh = useRefreshAccount();
+  return useMutation({
+    mutationFn: ({ password, code, key }: { password: string; code: string; key: string }) =>
+      createRecoveryCodes(password, code, key),
+    onSuccess: refresh,
+  });
+}
+
+export function useStartNewAuthenticator() {
+  return useMutation({
+    mutationFn: ({ password }: { password: string }) => startNewAuthenticator(password),
+  });
+}
+
+export function useConfirmNewAuthenticator() {
+  const refresh = useRefreshAccount();
+  return useMutation({
+    mutationFn: ({ challenge, code, key }: { challenge: string; code: string; key: string }) =>
+      confirmNewAuthenticator(challenge, code, key),
+    onSuccess: refresh,
   });
 }

@@ -6,8 +6,16 @@ import { defineConfig, devices } from "@playwright/test";
  *
  * Locally: Docker running, `uv run python -m app.scripts.e2e_seed` (apps/api),
  * `pnpm build`, then `pnpm e2e`. Servers already running are reused.
+ *
+ * Ports: 8000 (API) and 3000 (web) by default. If something else holds them (another
+ * project, a forgotten dev server), pick free ones; the web build must point at the
+ * same API port, because the /api/v1 proxy is fixed at build time:
+ *   $env:API_URL="http://127.0.0.1:8010"; pnpm build
+ *   $env:E2E_API_PORT="8010"; $env:E2E_WEB_PORT="3010"; pnpm e2e --project=chromium
  */
 const ci = Boolean(process.env.CI);
+const apiPort = process.env.E2E_API_PORT ?? "8000";
+const webPort = process.env.E2E_WEB_PORT ?? "3000";
 
 export default defineConfig({
   testDir: "./e2e",
@@ -20,7 +28,7 @@ export default defineConfig({
   expect: { timeout: 10_000 },
   reporter: ci ? [["github"], ["html", { open: "never" }]] : [["list"]],
   use: {
-    baseURL: "http://localhost:3000",
+    baseURL: `http://localhost:${webPort}`,
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
   },
@@ -34,16 +42,16 @@ export default defineConfig({
       // On Windows the API needs reload mode for psycopg's event loop (decision 011).
       command:
         process.platform === "win32"
-          ? "uv run fastapi dev --port 8000"
-          : "uv run fastapi run --port 8000",
+          ? `uv run fastapi dev --port ${apiPort}`
+          : `uv run fastapi run --port ${apiPort}`,
       cwd: "../api",
-      url: "http://127.0.0.1:8000/health",
+      url: `http://127.0.0.1:${apiPort}/health`,
       reuseExistingServer: !ci,
       timeout: 120_000,
     },
     {
-      command: "pnpm start",
-      url: "http://localhost:3000/api/health",
+      command: `pnpm start --port ${webPort}`,
+      url: `http://localhost:${webPort}/api/health`,
       reuseExistingServer: !ci,
       timeout: 120_000,
     },

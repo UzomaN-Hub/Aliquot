@@ -4,11 +4,14 @@ Same as dev_db (migrate, role passwords, Tavnit Labs) plus, per browser:
 - a console admin with no 2FA, so Chromium, Firefox and WebKit each run the full 2FA
   setup without tripping over each other (re-running resets it);
 - a "team" admin whose 2FA secret is known to the tests (e2e/console-team.spec.ts),
-  so the team test can sign in directly.
+  so the team test can sign in directly;
+- an "account" admin, also with a known secret, for My account (e2e/console-account.spec.ts).
+  Re-running signs out its old sessions and cancels its unused recovery codes, since the
+  test changes its password, codes and phone.
 Fictional data; refuses to run outside ENVIRONMENT=local.
 """
 
-from sqlalchemy import create_engine, text
+from sqlalchemy import Connection, create_engine, text
 
 from app.core.config import get_settings
 from app.core.ids import uuid7
@@ -20,6 +23,8 @@ BROWSERS = ("chromium", "firefox", "webkit")
 E2E_ADMIN_PASSWORD = "e2e-admin-password-2026"  # noqa: S105  # fictional, test-only
 # A test-only authenticator secret (base32), the same in e2e/console-team.spec.ts.
 E2E_TEAM_TOTP_SECRET = "JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP"  # noqa: S105  # fictional, test-only
+# The same in e2e/console-account.spec.ts.
+E2E_ACCOUNT_TOTP_SECRET = "KRUGS4ZANFZSAYJAORSXG5BAONSWG4TF"  # noqa: S105  # fictional, test-only
 
 
 def main() -> None:
@@ -69,8 +74,47 @@ def main() -> None:
                     "secret": encrypt_secret(E2E_TEAM_TOTP_SECRET),
                 },
             )
+            _seed_account_admin(connection, browser, password_hash)
     engine.dispose()
-    print("E2E database ready: Tavnit Labs + two console admins per browser.")
+    print("E2E database ready: Tavnit Labs + three console admins per browser.")
+
+
+def _seed_account_admin(connection: Connection, browser: str, password_hash: str) -> None:
+    """Back to a known start: the seed password and secret, no live sessions or codes.
+    Nothing is deleted (sessions and codes are revoked, as the app itself does)."""
+    params = {"email": f"e2e-account-{browser}@platform.example"}
+    connection.execute(
+        text(
+            "INSERT INTO platform_admins (id, email, full_name, password_hash, "
+            "totp_secret_enc) VALUES (:id, :email, :name, :hash, :secret) "
+            "ON CONFLICT (email) DO UPDATE SET password_hash = EXCLUDED.password_hash, "
+            "totp_secret_enc = EXCLUDED.totp_secret_enc, totp_last_step = NULL, "
+            "totp_failed_attempts = 0, totp_locked_until = NULL, active = true, "
+            "deactivated_at = NULL, password_changed_at = NULL"
+        ),
+        params
+        | {
+            "id": uuid7(),
+            "name": f"E2E Account {browser.title()}",
+            "hash": password_hash,
+            "secret": encrypt_secret(E2E_ACCOUNT_TOTP_SECRET),
+        },
+    )
+    connection.execute(
+        text(
+            "UPDATE platform_sessions SET revoked_at = now() WHERE revoked_at IS NULL "
+            "AND admin_id = (SELECT id FROM platform_admins WHERE email = :email)"
+        ),
+        params,
+    )
+    connection.execute(
+        text(
+            "UPDATE platform_recovery_codes SET revoked_at = now() WHERE used_at IS NULL "
+            "AND revoked_at IS NULL "
+            "AND admin_id = (SELECT id FROM platform_admins WHERE email = :email)"
+        ),
+        params,
+    )
 
 
 if __name__ == "__main__":

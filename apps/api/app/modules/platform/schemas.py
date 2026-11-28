@@ -42,6 +42,14 @@ class PlatformSessionResponse(BaseModel):
     token_type: Literal["bearer"] = "bearer"  # noqa: S105  # a token kind, not a secret
     expires_in: int
     admin: AdminResponse
+    recovery_codes_left: int | None = Field(
+        default=None, description="Set only after signing in with a recovery code."
+    )
+
+
+class RecoveryVerifyRequest(BaseModel):
+    challenge: str = Field(min_length=20, max_length=2000)
+    recovery_code: str = Field(min_length=16, max_length=40)
 
 
 # ── Labs ──────────────────────────────────────────────────────────────────
@@ -149,3 +157,58 @@ class InviteInfoResponse(BaseModel):
 
 class AcceptInviteRequest(InviteTokenRequest):
     password: str = Field(min_length=1, max_length=1024)
+
+
+# ── My account (decision 023) ───────────────────────────────────────────
+class AccountSessionResponse(BaseModel):
+    id: UUID
+    user_agent: str | None = Field(description="The browser that signed in, as it said.")
+    signed_in_at: datetime
+    last_used_at: datetime
+    current: bool = Field(description="This is the device asking.")
+
+
+class AccountResponse(BaseModel):
+    id: UUID
+    full_name: str
+    email: str
+    created_at: datetime
+    last_login_at: datetime | None
+    password_changed_at: datetime | None
+    two_factor: bool
+    recovery_codes_left: int
+    recovery_codes_created_at: datetime | None
+    sessions: list[AccountSessionResponse]
+
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str = Field(min_length=1, max_length=1024)
+    new_password: str = Field(min_length=1, max_length=1024)
+
+
+class PasswordAndCodeRequest(BaseModel):
+    password: str = Field(min_length=1, max_length=1024)
+    code: str = Field(min_length=6, max_length=12, description="From the authenticator app.")
+
+
+class RecoveryCodesResponse(BaseModel):
+    codes: list[str] | None = Field(description="Shown once; null on a replayed request.")
+    created_at: datetime
+
+
+class PasswordRequest(BaseModel):
+    password: str = Field(min_length=1, max_length=1024)
+
+
+class NewAuthenticatorResponse(BaseModel):
+    challenge: str = Field(description="Holds the new secret for 5 minutes.")
+    setup: TotpSetup
+
+
+class ConfirmAuthenticatorRequest(BaseModel):
+    challenge: str = Field(min_length=20, max_length=2000)
+    code: str = Field(min_length=6, max_length=12, description="From the NEW phone.")
+
+
+class SessionsEndedResponse(BaseModel):
+    ended: int = Field(description="How many other sessions were signed out.")

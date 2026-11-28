@@ -5,6 +5,7 @@ token can never open the console and a console token can never read a lab.
 """
 
 import hmac
+import secrets
 import time
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
@@ -20,6 +21,9 @@ from app.core.config import get_settings
 _ALGORITHM = "HS256"
 PLATFORM_AUDIENCE = "platform"
 _MFA_AUDIENCE = "platform-mfa"
+# Moving 2FA to a new phone from My account: its own audience, so this token can never
+# stand in for the sign-in challenge (and the reverse).
+_REBIND_AUDIENCE = "platform-new-authenticator"
 MFA_CHALLENGE_MINUTES = 5
 TOTP_PERIOD = 30
 
@@ -151,3 +155,69 @@ def verify_totp(
         if hmac.compare_digest(totp.at(step * TOTP_PERIOD), code):
             return step
     return None
+
+
+# ── A new authenticator from My account (decision 023) ───────────────────
+@dataclass(frozen=True)
+class RebindChallenge:
+    admin_id: UUID
+    session_id: UUID
+    pending_secret_enc: str
+
+
+def create_rebind_challenge(claims: PlatformClaims, pending_secret_enc: str) -> str:
+    """Holds the new secret, encrypted, for 5 minutes until a code from the new phone
+    confirms it. Tied to the session that asked, so another tab or device can't finish it."""
+    settings = get_settings()
+    now = datetime.now(UTC)
+    payload = {
+        "sub": str(claims.admin_id),
+        "sid": str(claims.session_id),
+        "pse": pending_secret_enc,
+        "aud": _REBIND_AUDIENCE,
+        "iss": settings.platform_domain,
+        "iat": now,
+        "exp": now + timedelta(minutes=MFA_CHALLENGE_MINUTES),
+    }
+    return jwt.encode(payload, settings.jwt_secret.get_secret_value(), algorithm=_ALGORITHM)
+
+
+def decode_rebind_challenge(token: str) -> RebindChallenge | None:
+    settings = get_settings()
+    try:
+        payload = jwt.decode(
+            token,
+            settings.jwt_secret.get_secret_value(),
+            algorithms=[_ALGORITHM],
+            audience=_REBIND_AUDIENCE,
+            issuer=settings.platform_domain,
+            options={"require": ["sub", "sid", "pse", "exp", "iat", "aud", "iss"]},
+        )
+        return RebindChallenge(
+            admin_id=UUID(payload["sub"]),
+            session_id=UUID(payload["sid"]),
+            pending_secret_enc=str(payload["pse"]),
+        )
+    except (jwt.PyJWTError, ValueError, KeyError):
+        return None
+
+
+# ── Recovery codes (decision 023) ────────────────────────────────────────
+# No 0/O, 1/I/L or U: nothing to misread when typing a code from paper.
+_RECOVERY_ALPHABET = "ABCDEFGHJKMNPQRSTVWXYZ23456789"
+RECOVERY_CODE_COUNT = 10
+_RECOVERY_LENGTH = 16  # 30^16 ≈ 2^78: far beyond guessing, so SHA-256 storage is enough
+
+
+def new_recovery_code() -> str:
+    """Like `K7QM-3HPX-WZ2R-9TBD`: four groups of four, easy to read and type."""
+    raw = "".join(secrets.choice(_RECOVERY_ALPHABET) for _ in range(_RECOVERY_LENGTH))
+    return "-".join(raw[i : i + 4] for i in range(0, _RECOVERY_LENGTH, 4))
+
+
+def normalise_recovery_code(code: str) -> str | None:
+    """The code as stored (upper case, no dashes or spaces), or None if it can't be one."""
+    cleaned = code.strip().upper().replace("-", "").replace(" ", "")
+    if len(cleaned) != _RECOVERY_LENGTH or any(c not in _RECOVERY_ALPHABET for c in cleaned):
+        return None
+    return cleaned

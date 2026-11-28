@@ -98,6 +98,11 @@ export function ConsoleShell({
       description: "Add a lab and its first Manager",
     },
     { href: "/console/team", label: "Platform team", description: "Super-admins and invites" },
+    {
+      href: "/console/account",
+      label: "My account",
+      description: "Password, two-step sign-in, recovery codes, devices",
+    },
   ];
 
   return (
