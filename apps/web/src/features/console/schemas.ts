@@ -21,6 +21,8 @@ export const consoleSessionSchema = z.object({
   token_type: z.literal("bearer"),
   expires_in: z.number().int().positive(),
   admin: z.object({ id: z.uuid(), full_name: z.string(), email: z.string() }),
+  // Set only after signing in with a recovery code (decision 023).
+  recovery_codes_left: z.number().int().nullable().optional(),
 });
 
 const section = z.enum(["chem_path", "haematology", "microbiology"]);
@@ -171,3 +173,87 @@ export type InviteAdminValues = z.infer<typeof inviteAdminSchema>;
 
 /** Super-admins hold the keys to every lab: 16 characters, as the CLI asks. */
 export const CONSOLE_MIN_PASSWORD = 16;
+
+// ── My account (decision 023) ────────────────────────────────────────────
+const totpSetupSchema = z.object({
+  secret: z.string(),
+  otpauth_uri: z.string(),
+  qr_image: z.string().startsWith("data:image/svg+xml"),
+});
+
+export const accountSchema = z.object({
+  id: z.uuid(),
+  full_name: z.string(),
+  email: z.string(),
+  created_at: z.string(),
+  last_login_at: z.string().nullable(),
+  password_changed_at: z.string().nullable(),
+  two_factor: z.boolean(),
+  recovery_codes_left: z.number().int(),
+  recovery_codes_created_at: z.string().nullable(),
+  sessions: z.array(
+    z.object({
+      id: z.uuid(),
+      user_agent: z.string().nullable(),
+      signed_in_at: z.string(),
+      last_used_at: z.string(),
+      current: z.boolean(),
+    }),
+  ),
+});
+export type Account = z.infer<typeof accountSchema>;
+export type AccountDevice = Account["sessions"][number];
+
+export const recoveryCodesSchema = z.object({
+  codes: z.array(z.string()).nullable(),
+  created_at: z.string(),
+});
+
+export const newAuthenticatorSchema = z.object({ challenge: z.string(), setup: totpSetupSchema });
+export type NewAuthenticator = z.infer<typeof newAuthenticatorSchema>;
+
+export const sessionsEndedSchema = z.object({ ended: z.number().int() });
+
+/** The full set the API makes; fewer than this many left is worth a nudge. */
+export const RECOVERY_CODE_COUNT = 10;
+export const RECOVERY_CODES_LOW = 3;
+
+export const changePasswordSchema = z
+  .object({
+    current_password: z.string().min(1, "Enter your current password."),
+    new_password: z
+      .string()
+      .min(
+        CONSOLE_MIN_PASSWORD,
+        `Use at least ${CONSOLE_MIN_PASSWORD} characters. A short sentence works well.`,
+      ),
+    confirm: z.string().min(1, "Type the new password again."),
+  })
+  .refine((values) => values.new_password === values.confirm, {
+    message: "The two passwords don't match.",
+    path: ["confirm"],
+  })
+  .refine((values) => values.new_password !== values.current_password, {
+    message: "Choose a password you haven't been using.",
+    path: ["new_password"],
+  });
+export type ChangePasswordValues = z.infer<typeof changePasswordSchema>;
+
+export const passwordSchema = z.object({
+  password: z.string().min(1, "Enter your password."),
+});
+export type PasswordValues = z.infer<typeof passwordSchema>;
+
+export const passwordAndCodeSchema = passwordSchema.extend(codeSchema.shape);
+export type PasswordAndCodeValues = z.input<typeof passwordAndCodeSchema>;
+export type PasswordAndCodeOutput = z.output<typeof passwordAndCodeSchema>;
+
+/** As typed from paper: any case, spaces or dashes. The API normalises it again. */
+export const recoveryCodeSchema = z.object({
+  recovery_code: z
+    .string()
+    .transform((value) => value.replace(/[\s-]/g, "").toUpperCase())
+    .pipe(z.string().regex(/^[A-Z0-9]{16}$/, "Enter all 16 characters of one recovery code.")),
+});
+export type RecoveryCodeValues = z.input<typeof recoveryCodeSchema>;
+export type RecoveryCodeOutput = z.output<typeof recoveryCodeSchema>;

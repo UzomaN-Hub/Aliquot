@@ -5,6 +5,8 @@ export type ConsoleSession = {
   accessToken: string;
   expiresAt: number;
   admin: { id: string; fullName: string; email: string };
+  /** Set when this session began with a recovery code: how many are left. */
+  recoveryCodesLeft?: number;
 };
 
 type ConsoleSessionState = {

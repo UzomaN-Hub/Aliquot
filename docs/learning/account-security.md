@@ -45,5 +45,14 @@ Nothing in the database changes until the new phone proves it works.
 - **Recovery codes stored in plain text:** one database leak hands out ways in.
 - **Sessions that only expire:** after a password change, a thief keeps access until their token runs out.
 
+## A 401 isn't always "sign in again"
+HTTP 401 means "not authorised", which covers two very different things:
+- **Your sign-in is over:** `not_signed_in`, `token_expired`, `session_ended`. The right move is to refresh the token once and retry.
+- **Your answer was wrong:** `wrong_password`, `code_invalid`, `recovery_code_invalid`. The right move is to show the message on the field.
+
+Our first version refreshed and retried on *every* 401. A mistyped password was sent twice, which used up two of the five tries, and if the refresh failed the person was signed out. The fix is to look at the error `code`, not only the status: `SIGN_IN_ENDED` in `apps/web/src/features/console/api.ts`.
+
 ## Tests
-`apps/api/app/modules/platform/tests/test_my_account.py` covers each rule above. Examples: a spent code is refused; five wrong passwords lock; a replay hides the codes; another device can't finish a phone switch.
+- `apps/api/app/modules/platform/tests/test_my_account.py` covers each rule above. Examples: a spent code is refused; five wrong passwords lock; a replay hides the codes; another device can't finish a phone switch.
+- `apps/web/src/features/console/components/my-account.test.tsx` covers the page and its states; `api.test.ts` covers the 401 rule.
+- `apps/web/e2e/console-account.spec.ts` does it all in a real browser. It makes codes, signs in with one on a second device, signs that device out, changes the password, moves to a new phone, then signs in again.

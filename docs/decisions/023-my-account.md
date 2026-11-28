@@ -36,4 +36,8 @@ Decision 019 left a super-admin's *own* account to a My account page: changing t
   - adds `platform_recovery_codes`, with RLS forced and only the `aliquot_platform` role allowed;
   - adds the index `platform_sessions (family_id, created_at)`, so "first signed in" reads one index entry instead of every refresh row. `EXPLAIN ANALYZE` with 5 devices and 15,000 rows: 5.8 ms → 0.16 ms.
 - A locked account also blocks My account changes for 15 minutes, even with the right password.
-- Next: the `/console/account` page. Later, the same page for lab staff (Managers and Chief Scientists get 2FA in this stage).
+- **The page, `/console/account`** (opened from the menu) has four parts, each with one action that opens a dialog: Password, Two-step sign-in, Recovery codes, Signed-in devices.
+  - New recovery codes can't be closed by accident: the dialog waits for "I've saved these codes somewhere safe", and offers Copy and Download as text.
+  - Console sign-in offers "Use a recovery code instead" (not while 2FA is being set up) and then goes straight to My account, with a notice of how many codes are left.
+- **Bug found while building it:** the console's API wrapper treated every 401 as "token expired". It refreshed and re-sent the request, so a wrong password was sent twice (counting twice toward the lock), and a failed refresh signed the person out. Now only `not_signed_in`, `token_expired` and `session_ended` trigger a refresh. Regression test: `apps/web/src/features/console/api.test.ts`.
+- Later: the same page for lab staff (Managers and Chief Scientists get 2FA in this stage).
