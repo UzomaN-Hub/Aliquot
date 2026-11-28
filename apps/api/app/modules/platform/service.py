@@ -22,13 +22,18 @@ from app.core.enums import LabStatus
 from app.core.errors import AppError
 from app.core.ids import uuid7
 from app.core.platform_security import (
+    RECOVERY_CODE_COUNT,
     PlatformClaims,
     create_mfa_challenge,
     create_platform_access_token,
+    create_rebind_challenge,
     decode_mfa_challenge,
+    decode_rebind_challenge,
     decrypt_secret,
     encrypt_secret,
+    new_recovery_code,
     new_totp_secret,
+    normalise_recovery_code,
     totp_provisioning,
     verify_totp,
 )
@@ -38,8 +43,15 @@ from app.modules.audit.models import ActorType
 from app.modules.auth import service as auth
 from app.modules.auth.service import ClientInfo
 from app.modules.platform import repository
-from app.modules.platform.models import PlatformAdmin, PlatformInvite, PlatformSession
+from app.modules.platform.models import (
+    PlatformAdmin,
+    PlatformInvite,
+    PlatformRecoveryCode,
+    PlatformSession,
+)
 from app.modules.platform.schemas import (
+    AccountResponse,
+    AccountSessionResponse,
     AdminResponse,
     AdminStatusName,
     CreateLabRequest,
@@ -49,7 +61,10 @@ from app.modules.platform.schemas import (
     InviteInfoResponse,
     InviteLinkResponse,
     LabDetailResponse,
+    NewAuthenticatorResponse,
     PlatformSessionResponse,
+    RecoveryCodesResponse,
+    SessionsEndedResponse,
     SignInStepResponse,
     TeamMemberResponse,
     TotpSetup,
@@ -84,7 +99,7 @@ def code_invalid() -> AppError:
 
 def too_many_attempts() -> AppError:
     return AppError(
-        429, "too_many_attempts", f"Too many wrong codes. Try again in {LOCK_MINUTES} minutes."
+        429, "too_many_attempts", f"Too many wrong tries. Try again in {LOCK_MINUTES} minutes."
     )
 
 
@@ -188,22 +203,7 @@ async def verify(challenge: str, code: str, client: ClientInfo) -> PlatformSigne
         step = verify_totp(secret, code, admin.totp_last_step) if secret else None
 
         if step is None:
-            # Committed even though the request fails: the counter must survive.
-            admin.totp_failed_attempts += 1
-            if admin.totp_failed_attempts >= MAX_CODE_ATTEMPTS:
-                admin.totp_locked_until = now + timedelta(minutes=LOCK_MINUTES)
-                admin.totp_failed_attempts = 0
-                outcome = too_many_attempts()
-            await audit.record(
-                session,
-                lab_id=None,
-                actor_type=ActorType.PLATFORM_ADMIN,
-                actor_id=admin.id,
-                action="platform.code_failed",
-                entity="platform_admin",
-                entity_id=admin.id,
-                ip=client.ip,
-            )
+            outcome = await _wrong_code(session, admin, now, client, "platform.code_failed")
         else:
             if setting_up:
                 admin.totp_secret_enc = secret_enc
@@ -225,6 +225,95 @@ async def verify(challenge: str, code: str, client: ClientInfo) -> PlatformSigne
                 entity_id=row.id,
                 ip=client.ip,
             )
+            outcome = PlatformSignedIn(response, token, expires_at)
+
+    if isinstance(outcome, AppError):
+        raise outcome
+    return outcome
+
+
+async def _wrong_code(
+    session: AsyncSession, admin: PlatformAdmin, now: datetime, client: ClientInfo, action: str
+) -> AppError:
+    """Count a wrong code (authenticator or recovery). The caller lets the transaction
+    commit and raises afterwards, so the counter survives the failed request. Five in a
+    row lock codes for 15 minutes."""
+    error = code_invalid()
+    admin.totp_failed_attempts += 1
+    if admin.totp_failed_attempts >= MAX_CODE_ATTEMPTS:
+        admin.totp_locked_until = now + timedelta(minutes=LOCK_MINUTES)
+        admin.totp_failed_attempts = 0
+        error = too_many_attempts()
+    await audit.record(
+        session,
+        lab_id=None,
+        actor_type=ActorType.PLATFORM_ADMIN,
+        actor_id=admin.id,
+        action=action,
+        entity="platform_admin",
+        entity_id=admin.id,
+        ip=client.ip,
+    )
+    return error
+
+
+def recovery_code_invalid() -> AppError:
+    return AppError(
+        401,
+        "recovery_code_invalid",
+        "That recovery code didn't work. Check it, or use one you haven't used before.",
+        "recovery_code",
+    )
+
+
+async def verify_recovery(
+    challenge: str, recovery_code: str, client: ClientInfo
+) -> PlatformSignedIn:
+    """Step 2 without the phone: one recovery code, used once (decision 023). Wrong
+    codes count toward the same 5-try lock as authenticator codes."""
+    claim = decode_mfa_challenge(challenge)
+    if claim is None or claim.pending_secret_enc is not None:
+        raise challenge_expired()  # no recovery codes exist before 2FA is set up
+    now = datetime.now(UTC)
+    outcome: PlatformSignedIn | AppError = recovery_code_invalid()
+
+    async with platform_transaction() as session:
+        admin = await repository.get_admin(session, claim.admin_id, lock=True)
+        if admin is None or not admin.active or admin.totp_secret_enc is None:
+            raise challenge_expired()
+        if admin.totp_locked_until is not None and admin.totp_locked_until > now:
+            raise too_many_attempts()
+        normalised = normalise_recovery_code(recovery_code)
+        code = (
+            await repository.get_usable_recovery_code(session, admin.id, hash_token(normalised))
+            if normalised
+            else None
+        )
+        if code is None:
+            error = await _wrong_code(session, admin, now, client, "platform.recovery_code_failed")
+            outcome = recovery_code_invalid() if error.code == "code_invalid" else error
+        else:
+            code.used_at = now
+            admin.totp_failed_attempts = 0
+            admin.totp_locked_until = None
+            admin.last_login_at = now
+            expires_at = now + timedelta(days=get_settings().refresh_token_days)
+            row, response, token = await _start_session(
+                session, admin, family_id=uuid7(), expires_at=expires_at, now=now, client=client
+            )
+            left, _ = await repository.usable_recovery_codes(session, admin.id)
+            await audit.record(
+                session,
+                lab_id=None,
+                actor_type=ActorType.PLATFORM_ADMIN,
+                actor_id=admin.id,
+                action="platform.sign_in_recovery_code",
+                entity="platform_session",
+                entity_id=row.id,
+                after={"recovery_codes_left": left},
+                ip=client.ip,
+            )
+            response = response.model_copy(update={"recovery_codes_left": left})
             outcome = PlatformSignedIn(response, token, expires_at)
 
     if isinstance(outcome, AppError):
@@ -808,3 +897,324 @@ async def accept_invite(token: str, password: str, client: ClientInfo) -> None:
             entity_id=admin.id,
             ip=client.ip,
         )
+
+
+# ── My account (decision 023) ────────────────────────────────────────────
+# Your own account, behind proof that it's you: the current password for everything,
+# plus a code from the phone when the change touches how you sign in. The session
+# alone is never enough, so a stolen or unattended session can't take the account.
+async def _replayed(admin_id: UUID, key: str | None, fingerprint: str) -> dict[str, Any] | None:
+    """A finished request retried with the same key gets its stored answer straight
+    away, before the password and code are checked again (the code is spent by then)."""
+    if key is None:
+        return None
+    async with platform_transaction() as session:
+        stored = await repository.get_idempotent_response(session, admin_id, key)
+    if stored is None:
+        return None
+    if stored.request_hash != fingerprint:
+        raise AppError(
+            422,
+            "idempotency_key_reused",
+            "This request key was already used for a different request.",
+        )
+    return stored.response_body
+
+
+async def _prove_identity(
+    claims: PlatformClaims,
+    password: str,
+    client: ClientInfo,
+    *,
+    code: str | None = None,
+    error_field: str = "password",
+) -> None:
+    """Check the password (and the code, when given) in a transaction of its own, so a
+    failure is audited and counted even though the request is refused. Wrong passwords
+    count toward the same 5-try lock as wrong codes: an unattended, signed-in laptop
+    can't be used to guess the password."""
+    now = datetime.now(UTC)
+    error: AppError | None = None
+    async with platform_transaction() as session:
+        admin = await repository.get_admin(session, claims.admin_id, lock=True)
+        if admin is None or not admin.active:
+            raise session_ended()
+        if admin.totp_locked_until is not None and admin.totp_locked_until > now:
+            raise too_many_attempts()
+        if not verify_password(admin.password_hash, password):
+            counted = await _wrong_code(
+                session, admin, now, client, "platform.account_password_failed"
+            )
+            error = (
+                counted
+                if counted.code == "too_many_attempts"
+                else AppError(
+                    401, "wrong_password", "That isn't your current password.", error_field
+                )
+            )
+        elif code is not None:
+            secret = decrypt_secret(admin.totp_secret_enc) if admin.totp_secret_enc else None
+            step = verify_totp(secret, code, admin.totp_last_step) if secret else None
+            if step is None:
+                error = await _wrong_code(session, admin, now, client, "platform.code_failed")
+            else:
+                admin.totp_last_step = step  # spent: this code can't be used again
+                admin.totp_failed_attempts = 0
+                admin.totp_locked_until = None
+    if error is not None:
+        raise error
+
+
+async def _current_family(session: AsyncSession, claims: PlatformClaims) -> UUID:
+    current = await repository.get_session(session, claims.session_id)
+    if current is None or current.revoked_at is not None:
+        raise session_ended()
+    return current.family_id
+
+
+async def _account(session: AsyncSession, claims: PlatformClaims) -> AccountResponse:
+    now = datetime.now(UTC)
+    admin = await repository.get_admin(session, claims.admin_id)
+    if admin is None or not admin.active:
+        raise session_ended()
+    family = await _current_family(session, claims)
+    left, created = await repository.usable_recovery_codes(session, admin.id)
+    devices = await repository.live_sessions(session, admin.id, now)
+    return AccountResponse(
+        id=admin.id,
+        full_name=admin.full_name,
+        email=admin.email,
+        created_at=admin.created_at,
+        last_login_at=admin.last_login_at,
+        password_changed_at=admin.password_changed_at,
+        two_factor=admin.totp_secret_enc is not None,
+        recovery_codes_left=left,
+        recovery_codes_created_at=created if left else None,
+        sessions=[
+            AccountSessionResponse(
+                id=row.id,
+                user_agent=row.user_agent,
+                signed_in_at=signed_in_at,
+                last_used_at=row.last_used_at,
+                current=row.family_id == family,
+            )
+            for row, signed_in_at in devices
+        ],
+    )
+
+
+async def get_account(claims: PlatformClaims) -> AccountResponse:
+    async with platform_transaction() as session:
+        return await _account(session, claims)
+
+
+async def change_password(
+    claims: PlatformClaims,
+    current_password: str,
+    new_password: str,
+    key: str | None,
+    client: ClientInfo,
+) -> AccountResponse | dict[str, Any]:
+    """New password; every OTHER device is signed out (this one stays). Neither password
+    goes into the idempotency record."""
+    fingerprint = request_hash(["change_password"])
+    replay = await _replayed(claims.admin_id, key, fingerprint)
+    if replay is not None:
+        return replay
+    if len(new_password) < MIN_PASSWORD_LENGTH:
+        raise AppError(
+            422,
+            "password_too_short",
+            f"Use at least {MIN_PASSWORD_LENGTH} characters. A short sentence works well.",
+            "new_password",
+        )
+    if new_password == current_password:
+        raise AppError(
+            422, "password_unchanged", "Choose a password you haven't been using.", "new_password"
+        )
+    await _prove_identity(claims, current_password, client, error_field="current_password")
+
+    async def action() -> tuple[AccountResponse, dict[str, Any]]:
+        now = datetime.now(UTC)
+        admin = await repository.get_admin(session, claims.admin_id, lock=True)
+        if admin is None:  # pragma: no cover: checked a moment ago
+            raise session_ended()
+        if new_password.strip().lower() == admin.email:
+            raise AppError(
+                422, "password_is_email", "Choose a password that isn't your email.", "new_password"
+            )
+        admin.password_hash = hash_password(new_password)
+        admin.password_changed_at = now
+        family = await _current_family(session, claims)
+        ended = await repository.revoke_other_sessions(session, admin.id, family, now)
+        await audit.record(
+            session,
+            lab_id=None,
+            actor_type=ActorType.PLATFORM_ADMIN,
+            actor_id=admin.id,
+            action="platform.password_changed",
+            entity="platform_admin",
+            entity_id=admin.id,
+            after={"other_sessions_ended": ended},
+            ip=client.ip,
+        )
+        response = await _account(session, claims)
+        return response, response.model_dump(mode="json")
+
+    async with platform_transaction() as session:
+        return await _idempotent(session, claims.admin_id, key, fingerprint, action)
+
+
+async def sign_out_others(
+    claims: PlatformClaims, key: str | None, client: ClientInfo
+) -> SessionsEndedResponse | dict[str, Any]:
+    """Every other device is signed out at once (decision 019's live-session check)."""
+
+    async def action() -> tuple[SessionsEndedResponse, dict[str, Any]]:
+        now = datetime.now(UTC)
+        family = await _current_family(session, claims)
+        ended = await repository.revoke_other_sessions(session, claims.admin_id, family, now)
+        await audit.record(
+            session,
+            lab_id=None,
+            actor_type=ActorType.PLATFORM_ADMIN,
+            actor_id=claims.admin_id,
+            action="platform.signed_out_elsewhere",
+            entity="platform_admin",
+            entity_id=claims.admin_id,
+            after={"ended": ended},
+            ip=client.ip,
+        )
+        response = SessionsEndedResponse(ended=ended)
+        return response, response.model_dump(mode="json")
+
+    async with platform_transaction() as session:
+        return await _idempotent(
+            session, claims.admin_id, key, request_hash(["sign_out_others"]), action
+        )
+
+
+async def create_recovery_codes(
+    claims: PlatformClaims, password: str, code: str, key: str | None, client: ClientInfo
+) -> RecoveryCodesResponse | dict[str, Any]:
+    """Ten new single-use codes, shown once; any older unused codes stop working."""
+    fingerprint = request_hash(["recovery_codes"])
+    replay = await _replayed(claims.admin_id, key, fingerprint)
+    if replay is not None:
+        return replay
+    await _prove_identity(claims, password, client, code=code)
+
+    async def action() -> tuple[RecoveryCodesResponse, dict[str, Any]]:
+        now = datetime.now(UTC)
+        await repository.revoke_recovery_codes(session, claims.admin_id, now)
+        codes = [new_recovery_code() for _ in range(RECOVERY_CODE_COUNT)]
+        await repository.add_recovery_codes(
+            session,
+            [
+                PlatformRecoveryCode(
+                    id=uuid7(),
+                    admin_id=claims.admin_id,
+                    code_hash=hash_token(normalise_recovery_code(c) or ""),
+                    created_at=now,
+                )
+                for c in codes
+            ],
+        )
+        await audit.record(
+            session,
+            lab_id=None,
+            actor_type=ActorType.PLATFORM_ADMIN,
+            actor_id=claims.admin_id,
+            action="platform.recovery_codes_created",
+            entity="platform_admin",
+            entity_id=claims.admin_id,
+            after={"count": RECOVERY_CODE_COUNT},
+            ip=client.ip,
+        )
+        response = RecoveryCodesResponse(codes=codes, created_at=now)
+        # The stored replay leaves the codes out: they exist only once, in this answer.
+        return response, response.model_copy(update={"codes": None}).model_dump(mode="json")
+
+    async with platform_transaction() as session:
+        return await _idempotent(session, claims.admin_id, key, fingerprint, action)
+
+
+async def start_new_authenticator(
+    claims: PlatformClaims, password: str, client: ClientInfo
+) -> NewAuthenticatorResponse:
+    """Step 1 of moving 2FA to a new phone: the password only (the old phone may be
+    gone, and this session may have begun with a recovery code). Nothing changes yet."""
+    await _prove_identity(claims, password, client)
+    async with platform_transaction() as session:
+        admin = await repository.get_admin(session, claims.admin_id)
+    if admin is None:  # pragma: no cover: checked a moment ago
+        raise session_ended()
+    secret = new_totp_secret()
+    uri, image = totp_provisioning(secret, admin.email)
+    return NewAuthenticatorResponse(
+        challenge=create_rebind_challenge(claims, encrypt_secret(secret)),
+        setup=TotpSetup(secret=secret, otpauth_uri=uri, qr_image=image),
+    )
+
+
+def setup_expired() -> AppError:
+    return AppError(401, "challenge_expired", "Setting up took too long. Start again.")
+
+
+async def confirm_new_authenticator(
+    claims: PlatformClaims, challenge: str, code: str, key: str | None, client: ClientInfo
+) -> SessionsEndedResponse | dict[str, Any]:
+    """Step 2: a code from the NEW phone switches 2FA over. The old phone stops working
+    and every other device is signed out. Recovery codes stay valid."""
+    claim = decode_rebind_challenge(challenge)
+    if claim is None or claim.admin_id != claims.admin_id or claim.session_id != claims.session_id:
+        raise setup_expired()
+    fingerprint = request_hash(["new_authenticator", hash_token(challenge)])
+    replay = await _replayed(claims.admin_id, key, fingerprint)
+    if replay is not None:
+        return replay
+
+    now = datetime.now(UTC)
+    error: AppError | None = None
+    step: int | None = None
+    async with platform_transaction() as session:
+        admin = await repository.get_admin(session, claims.admin_id, lock=True)
+        if admin is None or not admin.active:
+            raise session_ended()
+        if admin.totp_locked_until is not None and admin.totp_locked_until > now:
+            raise too_many_attempts()
+        secret = decrypt_secret(claim.pending_secret_enc)
+        # Already switched by this same challenge: the code it used can't be sent again.
+        last = admin.totp_last_step if admin.totp_secret_enc == claim.pending_secret_enc else None
+        step = verify_totp(secret, code, last) if secret else None
+        if step is None:
+            error = await _wrong_code(session, admin, now, client, "platform.code_failed")
+    if error is not None:
+        raise error
+
+    async def action() -> tuple[SessionsEndedResponse, dict[str, Any]]:
+        admin = await repository.get_admin(session, claims.admin_id, lock=True)
+        if admin is None:  # pragma: no cover: checked a moment ago
+            raise session_ended()
+        admin.totp_secret_enc = claim.pending_secret_enc
+        admin.totp_last_step = step
+        admin.totp_failed_attempts = 0
+        admin.totp_locked_until = None
+        family = await _current_family(session, claims)
+        ended = await repository.revoke_other_sessions(session, admin.id, family, now)
+        await audit.record(
+            session,
+            lab_id=None,
+            actor_type=ActorType.PLATFORM_ADMIN,
+            actor_id=admin.id,
+            action="platform.2fa_moved",
+            entity="platform_admin",
+            entity_id=admin.id,
+            after={"other_sessions_ended": ended},
+            ip=client.ip,
+        )
+        response = SessionsEndedResponse(ended=ended)
+        return response, response.model_dump(mode="json")
+
+    async with platform_transaction() as session:
+        return await _idempotent(session, claims.admin_id, key, fingerprint, action)

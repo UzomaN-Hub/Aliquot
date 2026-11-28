@@ -13,7 +13,10 @@ from app.modules.platform import service
 from app.modules.platform.dependencies import CurrentAdmin, IdempotencyKey
 from app.modules.platform.schemas import (
     AcceptInviteRequest,
+    AccountResponse,
     AdminResponse,
+    ChangePasswordRequest,
+    ConfirmAuthenticatorRequest,
     CreateLabRequest,
     CreateLabResponse,
     InviteAdminRequest,
@@ -23,8 +26,14 @@ from app.modules.platform.schemas import (
     InviteTokenRequest,
     LabDetailResponse,
     LabSummaryResponse,
+    NewAuthenticatorResponse,
+    PasswordAndCodeRequest,
+    PasswordRequest,
     PlatformSessionResponse,
     PlatformSignInRequest,
+    RecoveryCodesResponse,
+    RecoveryVerifyRequest,
+    SessionsEndedResponse,
     SignInStepResponse,
     StatusChangeRequest,
     TeamMemberResponse,
@@ -62,11 +71,12 @@ def _with_cookie(
     return signed_in.response
 
 
-def _json(result: Any, status_code: int = 200) -> Response:
-    """A fresh response model, or the stored body of a replayed idempotent request."""
-    if isinstance(result, dict):
-        return JSONResponse(result, status_code=status_code)
-    return JSONResponse(result.model_dump(mode="json"), status_code=status_code)
+def _json(result: Any, status_code: int = 200, *, secret: bool = False) -> Response:
+    """A fresh response model, or the stored body of a replayed idempotent request.
+    `secret`: the body holds something shown once (codes, a QR secret): never cached."""
+    body = result if isinstance(result, dict) else result.model_dump(mode="json")
+    headers = {"Cache-Control": "no-store"} if secret else None
+    return JSONResponse(body, status_code=status_code, headers=headers)
 
 
 # ── Auth ──────────────────────────────────────────────────────────────────
@@ -80,6 +90,16 @@ async def verify(
     body: VerifyRequest, request: Request, response: Response
 ) -> PlatformSessionResponse:
     signed_in = await service.verify(body.challenge, body.code, client_info(request))
+    return _with_cookie(signed_in, response)
+
+
+@router.post("/auth/recover", summary="Step 2 without the phone: a single-use recovery code")
+async def recover(
+    body: RecoveryVerifyRequest, request: Request, response: Response
+) -> PlatformSessionResponse:
+    signed_in = await service.verify_recovery(
+        body.challenge, body.recovery_code, client_info(request)
+    )
     return _with_cookie(signed_in, response)
 
 
@@ -291,3 +311,73 @@ async def check_invite(body: InviteTokenRequest) -> InviteInfoResponse:
 )
 async def accept_invite(body: AcceptInviteRequest, request: Request) -> None:
     await service.accept_invite(body.token, body.password, client_info(request))
+
+
+# ── My account (decision 023) ────────────────────────────────────────────
+@router.get("/account", summary="Your own account: security details and signed-in devices")
+async def get_account(claims: CurrentAdmin) -> AccountResponse:
+    return await service.get_account(claims)
+
+
+@router.post(
+    "/account/password",
+    summary="Change your password (other devices are signed out)",
+    response_model=AccountResponse,
+)
+async def change_password(
+    body: ChangePasswordRequest, request: Request, claims: CurrentAdmin, key: IdempotencyKey
+) -> Response:
+    result = await service.change_password(
+        claims, body.current_password, body.new_password, key, client_info(request)
+    )
+    return _json(result)
+
+
+@router.post(
+    "/account/sign-out-others",
+    summary="Sign out every other device at once",
+    response_model=SessionsEndedResponse,
+)
+async def sign_out_others(request: Request, claims: CurrentAdmin, key: IdempotencyKey) -> Response:
+    return _json(await service.sign_out_others(claims, key, client_info(request)))
+
+
+@router.post(
+    "/account/recovery-codes",
+    summary="Ten new recovery codes, shown once (older unused codes stop working)",
+    status_code=status.HTTP_201_CREATED,
+    response_model=RecoveryCodesResponse,
+)
+async def create_recovery_codes(
+    body: PasswordAndCodeRequest, request: Request, claims: CurrentAdmin, key: IdempotencyKey
+) -> Response:
+    result = await service.create_recovery_codes(
+        claims, body.password, body.code, key, client_info(request)
+    )
+    return _json(result, status.HTTP_201_CREATED, secret=True)
+
+
+@router.post(
+    "/account/authenticator",
+    summary="Start moving two-step sign-in to a new phone (QR code, 5 minutes)",
+    response_model=NewAuthenticatorResponse,
+)
+async def start_new_authenticator(
+    body: PasswordRequest, request: Request, claims: CurrentAdmin
+) -> Response:
+    result = await service.start_new_authenticator(claims, body.password, client_info(request))
+    return _json(result, secret=True)
+
+
+@router.post(
+    "/account/authenticator/confirm",
+    summary="Finish with a code from the new phone (other devices are signed out)",
+    response_model=SessionsEndedResponse,
+)
+async def confirm_new_authenticator(
+    body: ConfirmAuthenticatorRequest, request: Request, claims: CurrentAdmin, key: IdempotencyKey
+) -> Response:
+    result = await service.confirm_new_authenticator(
+        claims, body.challenge, body.code, key, client_info(request)
+    )
+    return _json(result)

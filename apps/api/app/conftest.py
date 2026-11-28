@@ -47,7 +47,8 @@ from app.scripts.dev_db import migrate, set_app_role_password  # noqa: E402
 
 _TABLES = (
     "audit_log, auth_tokens, sessions, user_sections, user_roles, users, lab_sections, labs, "
-    "platform_idempotency_keys, platform_invites, platform_sessions, platform_admins"
+    "platform_idempotency_keys, platform_invites, platform_recovery_codes, platform_sessions, "
+    "platform_admins"
 )
 
 

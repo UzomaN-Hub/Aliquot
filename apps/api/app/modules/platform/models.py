@@ -28,6 +28,7 @@ class PlatformAdmin(Base):
     invited_by: Mapped[UUID | None] = mapped_column(ForeignKey("platform_admins.id"))
     deactivated_at: Mapped[datetime | None]
     last_login_at: Mapped[datetime | None]
+    password_changed_at: Mapped[datetime | None]
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(server_default=func.now())
 
@@ -74,3 +75,16 @@ class PlatformIdempotencyKey(Base):
     response_status: Mapped[int]
     response_body: Mapped[dict[str, Any]] = mapped_column(JSONB)
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
+
+
+class PlatformRecoveryCode(Base):
+    """A single-use way in when the phone is gone (decision 023). Stored hashed."""
+
+    __tablename__ = "platform_recovery_codes"
+
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid7)
+    admin_id: Mapped[UUID] = mapped_column(ForeignKey("platform_admins.id"))
+    code_hash: Mapped[str] = mapped_column(unique=True)
+    created_at: Mapped[datetime] = mapped_column(server_default=func.now())
+    used_at: Mapped[datetime | None]
+    revoked_at: Mapped[datetime | None]
